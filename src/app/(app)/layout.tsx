@@ -13,6 +13,7 @@ import {
   Users,
   FileText,
   Repeat,
+  Package,
   Settings,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/invoices", label: "Invoices", icon: FileText },
   { href: "/clients", label: "Clients", icon: Users },
+  { href: "/items", label: "Items", icon: Package },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

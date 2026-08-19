@@ -45,6 +45,7 @@ export const businesses = sqliteTable("businesses", {
 export const businessesRelations = relations(businesses, ({ many }) => ({
   users: many(users),
   clients: many(clients),
+  items: many(items),
   invoices: many(invoices),
   recurringSchedules: many(recurringSchedules),
   subscriptions: many(subscriptions),
@@ -92,6 +93,25 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   }),
   invoices: many(invoices),
   recurringSchedules: many(recurringSchedules),
+}));
+
+// ---------- Saved items / services catalog ----------
+export const items = sqliteTable("items", {
+  id: id(),
+  businessId: text("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  code: text("code"), // optional SKU/reference code, e.g. "Metro Fibre - PTP"
+  name: text("name").notNull(),
+  defaultPrice: real("default_price").notNull().default(0),
+  ...timestamps,
+});
+
+export const itemsRelations = relations(items, ({ one }) => ({
+  business: one(businesses, {
+    fields: [items.businessId],
+    references: [businesses.id],
+  }),
 }));
 
 // ---------- Recurring schedules ----------

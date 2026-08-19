@@ -15,6 +15,13 @@
       "when": 1787154708840,
       "tag": "0001_special_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787157824673,
+      "tag": "0002_nebulous_agent_zero",
+      "breakpoints": true
     }
   ]
 }

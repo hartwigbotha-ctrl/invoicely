@@ -1,7 +1,7 @@
 import { requireBusiness } from "@/lib/session";
 import { db } from "@/db";
-import { clients } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { clients, items } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { createRecurringSchedule } from "@/lib/actions/recurring";
 import { LineItemsEditor } from "../../line-items-editor";
 import { formatISO } from "date-fns";
@@ -11,6 +11,10 @@ export default async function NewSchedulePage() {
   const { business } = await requireBusiness();
   const allClients = await db.query.clients.findMany({
     where: eq(clients.businessId, business.id),
+  });
+  const savedItems = await db.query.items.findMany({
+    where: eq(items.businessId, business.id),
+    orderBy: desc(items.createdAt),
   });
 
   const today = formatISO(new Date(), { representation: "date" });
@@ -126,7 +130,7 @@ export default async function NewSchedulePage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Line items</label>
-          <LineItemsEditor />
+          <LineItemsEditor savedItems={savedItems} />
         </div>
 
         <div>
