@@ -2,9 +2,15 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 import path from "path";
+import fs from "fs";
 
 const dbPath = process.env.DATABASE_URL?.replace("file:", "") ||
   path.join(process.cwd(), "data", "app.db");
+
+// Ensure the parent directory exists before opening the file — better-sqlite3
+// throws (not creates) if it doesn't, which otherwise breaks builds/deploys
+// on hosts like Railway where the data dir isn't there yet.
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
