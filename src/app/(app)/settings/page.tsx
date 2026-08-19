@@ -55,40 +55,119 @@ export default async function SettingsPage() {
         </div>
       )}
 
-      <form action={updateBusinessSettings} className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name" label="Business name" defaultValue={business.name} required />
-          <Field name="email" label="Email" type="email" defaultValue={business.email} required />
-          <Field name="phone" label="Phone" defaultValue={business.phone ?? ""} />
-          <Field name="vatNumber" label="VAT number" defaultValue={business.vatNumber ?? ""} />
-          <Field name="regNumber" label="Registration number" defaultValue={business.regNumber ?? ""} />
-          <Field name="currency" label="Currency" defaultValue={business.currency} />
-          <Field
-            name="invoicePrefix"
-            label="Invoice number prefix"
-            defaultValue={business.invoicePrefix}
-          />
-          <Field
-            name="defaultTaxRate"
-            label="Default tax rate (%)"
-            type="number"
-            defaultValue={String(business.defaultTaxRate)}
-          />
-          <Field
-            name="paymentTermsDays"
-            label="Default payment terms (days)"
-            type="number"
-            defaultValue={String(business.paymentTermsDays)}
-          />
+      <form
+        action={updateBusinessSettings}
+        encType="multipart/form-data"
+        className="bg-white border border-gray-200 rounded-lg p-6 space-y-6"
+      >
+        <div>
+          <h2 className="font-semibold mb-3">Branding</h2>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+              {business.logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={business.logoUrl}
+                  alt="Current logo"
+                  className="h-14 mb-2 object-contain border border-gray-200 rounded-md p-1"
+                />
+              )}
+              <input
+                type="file"
+                name="logo"
+                accept="image/*"
+                className="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-gray-100 file:text-sm file:font-medium hover:file:bg-gray-200"
+              />
+              {business.logoUrl && (
+                <label className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <input type="checkbox" name="removeLogo" value="1" />
+                  Remove current logo
+                </label>
+              )}
+              <p className="text-xs text-gray-400 mt-1">PNG or JPG, under 500KB. Appears on invoice PDFs.</p>
+            </div>
+
+            <div>
+              <label htmlFor="brandColor" className="block text-sm font-medium text-gray-700 mb-1">
+                Brand color
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="brandColor"
+                  type="color"
+                  name="brandColor"
+                  defaultValue={business.brandColor}
+                  className="h-10 w-14 rounded border border-gray-300 cursor-pointer"
+                />
+                <span className="text-sm text-gray-500">Used for headings and accents on invoices</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Invoice layout</label>
+            <div className="grid sm:grid-cols-3 gap-3">
+              <TemplateOption
+                value="modern"
+                label="Modern"
+                description="Shaded table header, bold accents"
+                current={business.pdfTemplate}
+              />
+              <TemplateOption
+                value="classic"
+                label="Classic"
+                description="Centered header, serif-style"
+                current={business.pdfTemplate}
+              />
+              <TemplateOption
+                value="minimal"
+                label="Minimal"
+                description="Clean lines, no fills"
+                current={business.pdfTemplate}
+              />
+            </div>
+          </div>
         </div>
 
-        <Field name="address" label="Address" defaultValue={business.address ?? ""} textarea />
-        <Field
-          name="bankDetails"
-          label="Bank / payment details (shown on invoices)"
-          defaultValue={business.bankDetails ?? ""}
-          textarea
-        />
+        <div className="border-t border-gray-200 pt-6">
+          <h2 className="font-semibold mb-3">Business details</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field name="name" label="Business name" defaultValue={business.name} required />
+            <Field name="email" label="Email" type="email" defaultValue={business.email} required />
+            <Field name="phone" label="Phone" defaultValue={business.phone ?? ""} />
+            <Field name="vatNumber" label="VAT number" defaultValue={business.vatNumber ?? ""} />
+            <Field name="regNumber" label="Registration number" defaultValue={business.regNumber ?? ""} />
+            <Field name="currency" label="Currency (e.g. ZAR, USD, EUR, GBP)" defaultValue={business.currency} />
+            <Field
+              name="invoicePrefix"
+              label="Invoice number prefix"
+              defaultValue={business.invoicePrefix}
+            />
+            <Field
+              name="defaultTaxRate"
+              label="Default tax rate (%)"
+              type="number"
+              defaultValue={String(business.defaultTaxRate)}
+            />
+            <Field
+              name="paymentTermsDays"
+              label="Default payment terms (days)"
+              type="number"
+              defaultValue={String(business.paymentTermsDays)}
+            />
+          </div>
+
+          <div className="mt-4 space-y-4">
+            <Field name="address" label="Address" defaultValue={business.address ?? ""} textarea />
+            <Field
+              name="bankDetails"
+              label="Bank / payment details (shown on invoices)"
+              defaultValue={business.bankDetails ?? ""}
+              textarea
+            />
+          </div>
+        </div>
 
         <button
           type="submit"
@@ -98,6 +177,33 @@ export default async function SettingsPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+function TemplateOption({
+  value,
+  label,
+  description,
+  current,
+}: {
+  value: string;
+  label: string;
+  description: string;
+  current: string;
+}) {
+  const checked = current === value;
+  return (
+    <label
+      className={`flex flex-col gap-1 rounded-md border p-3 cursor-pointer text-sm ${
+        checked ? "border-gray-900 ring-1 ring-gray-900" : "border-gray-200"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <input type="radio" name="pdfTemplate" value={value} defaultChecked={checked} />
+        <span className="font-medium">{label}</span>
+      </div>
+      <span className="text-xs text-gray-500">{description}</span>
+    </label>
   );
 }
 

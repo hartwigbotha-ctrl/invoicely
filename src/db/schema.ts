@@ -31,6 +31,8 @@ export const businesses = sqliteTable("businesses", {
   vatNumber: text("vat_number"),
   regNumber: text("reg_number"),
   logoUrl: text("logo_url"),
+  brandColor: text("brand_color").notNull().default("#111827"),
+  pdfTemplate: text("pdf_template").notNull().default("modern"), // modern | classic | minimal
   invoicePrefix: text("invoice_prefix").notNull().default("INV"),
   nextInvoiceSeq: integer("next_invoice_seq").notNull().default(1),
   currency: text("currency").notNull().default("ZAR"),

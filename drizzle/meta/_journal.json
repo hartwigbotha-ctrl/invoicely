@@ -8,6 +8,13 @@
       "when": 1787132678655,
       "tag": "0000_tough_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787154708840,
+      "tag": "0001_special_tomas",
+      "breakpoints": true
     }
   ]
 }
