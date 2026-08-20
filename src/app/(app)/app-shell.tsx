@@ -13,6 +13,7 @@ import {
   Settings,
   Menu,
   X,
+  UploadCloud,
 } from "lucide-react";
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/items", label: "Items", icon: Package },
   { href: "/recurring", label: "Recurring", icon: Repeat },
+  { href: "/imports", label: "Import", icon: UploadCloud },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

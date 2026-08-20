@@ -1,12 +1,11 @@
 "use server";
 
 import { db } from "@/db";
-import { businesses, users, subscriptions, plans } from "@/db/schema";
+import { businesses, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { signIn } from "@/lib/auth";
-import { addDays, formatISO } from "date-fns";
 
 const registerSchema = z.object({
   businessName: z.string().min(2, "Business name is required"),
@@ -66,22 +65,10 @@ export async function registerBusiness(
     role: "owner",
   });
 
-  // Enroll in the free/starter plan with a 14-day trial by default.
-  const starterPlan =
-    (await db.query.plans.findFirst({ where: eq(plans.name, "Starter") })) ??
-    (await db.query.plans.findFirst());
-
-  if (starterPlan) {
-    const now = new Date();
-    await db.insert(subscriptions).values({
-      businessId,
-      planId: starterPlan.id,
-      status: "trialing",
-      trialEndsAt: formatISO(addDays(now, 14)),
-      currentPeriodStart: formatISO(now),
-      currentPeriodEnd: formatISO(addDays(now, 14)),
-    });
-  }
+  // No free tier and no trial — the business has no subscription until they
+  // check out with a card (PayFast integration pending). Until then their
+  // plan shows as "No active plan" in Settings, where they can also set a
+  // plan manually while billing isn't wired up yet.
 
   await signIn("credentials", {
     email: normalizedEmail,

@@ -9,7 +9,7 @@ export default function RegisterPage() {
           <Link href="/" className="text-2xl font-bold">
             Invoicely
           </Link>
-          <p className="mt-2 text-gray-600">Start your 14-day free trial</p>
+          <p className="mt-2 text-gray-600">Create your account</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <RegisterForm />

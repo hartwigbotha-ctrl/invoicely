@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { businesses, subscriptions, plans } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { requireBusiness } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 
@@ -49,4 +49,41 @@ export async function updateBusinessSettings(formData: FormData) {
 
   revalidatePath("/settings");
   revalidatePath("/invoices");
+}
+
+/**
+ * TEMPORARY: manual plan switch used until real billing (PayFast) is wired
+ * up. Lets the account owner set their own plan directly so Pro/Business
+ * features can be used and demoed before card payments are live. Once
+ * PayFast webhooks are in, subscription rows will be updated automatically
+ * from payment events instead and this action can be removed or restricted.
+ */
+export async function setPlanManually(formData: FormData) {
+  const { business } = await requireBusiness();
+  const planName = formData.get("planName") as string;
+
+  const plan = await db.query.plans.findFirst({ where: eq(plans.name, planName) });
+  if (!plan) throw new Error("Unknown plan");
+
+  const existing = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.businessId, business.id),
+    orderBy: desc(subscriptions.createdAt),
+  });
+
+  const now = new Date().toISOString();
+  if (existing) {
+    await db
+      .update(subscriptions)
+      .set({ planId: plan.id, status: "active", canceledAt: null, updatedAt: now })
+      .where(eq(subscriptions.id, existing.id));
+  } else {
+    await db.insert(subscriptions).values({
+      businessId: business.id,
+      planId: plan.id,
+      status: "active",
+    });
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/imports");
 }

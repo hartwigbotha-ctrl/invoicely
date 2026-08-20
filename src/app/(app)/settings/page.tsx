@@ -1,17 +1,20 @@
 import { requireBusiness } from "@/lib/session";
-import { updateBusinessSettings } from "@/lib/actions/settings";
+import { updateBusinessSettings, setPlanManually } from "@/lib/actions/settings";
 import { db } from "@/db";
-import { subscriptions, plans } from "@/db/schema";
+import { subscriptions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export default async function SettingsPage() {
   const { business } = await requireBusiness();
 
-  const subscription = await db.query.subscriptions.findFirst({
-    where: eq(subscriptions.businessId, business.id),
-    with: { plan: true },
-    orderBy: desc(subscriptions.createdAt),
-  });
+  const [subscription, allPlans] = await Promise.all([
+    db.query.subscriptions.findFirst({
+      where: eq(subscriptions.businessId, business.id),
+      with: { plan: true },
+      orderBy: desc(subscriptions.createdAt),
+    }),
+    db.query.plans.findMany(),
+  ]);
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-8">
@@ -22,38 +25,55 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      {subscription && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="font-semibold mb-3">Subscription</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="font-semibold mb-3">Subscription</h2>
+        {subscription ? (
           <div className="flex items-center justify-between text-sm">
             <div>
               <p className="font-medium">{subscription.plan.name}</p>
               <p className="text-gray-500">
-                {subscription.plan.priceMonthly > 0
-                  ? `${subscription.plan.currency} ${subscription.plan.priceMonthly.toFixed(2)} / month`
-                  : "Free"}
+                {subscription.plan.currency} {subscription.plan.priceMonthly.toFixed(2)} / month
               </p>
             </div>
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                subscription.status === "trialing"
-                  ? "bg-blue-100 text-blue-700"
-                  : subscription.status === "active"
+                subscription.status === "active"
                   ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-600"
               }`}
             >
-              {subscription.status === "trialing" ? "Free trial" : subscription.status}
+              {subscription.status}
             </span>
           </div>
-          {subscription.status === "trialing" && subscription.trialEndsAt && (
-            <p className="text-xs text-gray-500 mt-2">
-              Trial ends {new Date(subscription.trialEndsAt).toLocaleDateString()}. Billing is not
-              yet connected — add a payment provider (e.g. PayFast or Stripe) before the trial ends.
-            </p>
-          )}
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500">No active plan yet.</p>
+        )}
+
+        {/* Temporary manual plan switch — will be replaced by PayFast checkout. */}
+        <form action={setPlanManually} className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+          <label htmlFor="planName" className="text-xs text-gray-500">
+            Set plan (manual, until card billing is live):
+          </label>
+          <select
+            id="planName"
+            name="planName"
+            defaultValue={subscription?.plan.name ?? ""}
+            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            {allPlans.map((p) => (
+              <option key={p.id} value={p.name}>
+                {p.name} — R{p.priceMonthly}/mo
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="text-sm bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-800"
+          >
+            Update
+          </button>
+        </form>
+      </div>
 
       <form
         action={updateBusinessSettings}

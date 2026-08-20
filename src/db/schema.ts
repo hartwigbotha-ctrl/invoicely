@@ -52,6 +52,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   quotes: many(quotes),
   recurringSchedules: many(recurringSchedules),
   subscriptions: many(subscriptions),
+  documentImports: many(documentImports),
 }));
 
 // ---------- Users ----------
@@ -355,5 +356,43 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
   plan: one(plans, {
     fields: [subscriptions.planId],
     references: [plans.id],
+  }),
+}));
+
+// ---------- Document imports (Pro/Business: bulk-migrate old invoices/quotes) ----------
+// A row is created per uploaded file (Word/PDF/Excel/scanned image). An AI
+// extraction pass fills extractedJson with a best-effort parse of client,
+// line items, dates and totals; the user reviews/edits that before it's
+// turned into a real invoice or quote via confirmImport().
+export const documentImports = sqliteTable("document_imports", {
+  id: id(),
+  businessId: text("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  status: text("status").notNull().default("pending"), // pending|imported|discarded|failed
+  docType: text("doc_type").notNull().default("invoice"), // invoice | quote
+  extractedJson: text("extracted_json").notNull(), // best-effort AI-parsed payload, editable before confirm
+  matchedClientId: text("matched_client_id").references(() => clients.id, {
+    onDelete: "set null",
+  }),
+  createdInvoiceId: text("created_invoice_id").references(() => invoices.id, {
+    onDelete: "set null",
+  }),
+  createdQuoteId: text("created_quote_id").references(() => quotes.id, {
+    onDelete: "set null",
+  }),
+  errorMessage: text("error_message"),
+  ...timestamps,
+});
+
+export const documentImportsRelations = relations(documentImports, ({ one }) => ({
+  business: one(businesses, {
+    fields: [documentImports.businessId],
+    references: [businesses.id],
+  }),
+  matchedClient: one(clients, {
+    fields: [documentImports.matchedClientId],
+    references: [clients.id],
   }),
 }));
