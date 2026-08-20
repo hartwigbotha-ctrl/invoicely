@@ -21,7 +21,7 @@ export default async function NewSchedulePage() {
 
   if (allClients.length === 0) {
     return (
-      <div className="p-8 max-w-2xl mx-auto text-center">
+      <div className="p-4 sm:p-8 max-w-2xl mx-auto text-center">
         <h1 className="text-2xl font-bold mb-4">New recurring schedule</h1>
         <p className="text-gray-600 mb-6">You need at least one client first.</p>
         <Link
@@ -35,7 +35,7 @@ export default async function NewSchedulePage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">New recurring schedule</h1>
       <p className="text-sm text-gray-600 mb-8">
         Invoicely will automatically generate (and optionally email) an invoice each time this schedule is due.

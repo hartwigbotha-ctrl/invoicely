@@ -2,14 +2,18 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { sendInvoice, deleteInvoice, markInvoicePaid } from "@/lib/actions/invoices";
+import { PdfPreviewButton } from "../../pdf-preview-button";
 
 export function InvoiceActions({
   invoiceId,
+  invoiceNumber,
   status,
   hasClientEmail,
 }: {
   invoiceId: string;
+  invoiceNumber: string;
   status: string;
   hasClientEmail: boolean;
 }) {
@@ -18,14 +22,14 @@ export function InvoiceActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <a
-        href={`/invoices/${invoiceId}/pdf`}
-        target="_blank"
-        rel="noopener noreferrer"
+      <PdfPreviewButton href={`/invoices/${invoiceId}/pdf`} filename={`${invoiceNumber}.pdf`} label="Preview" />
+
+      <Link
+        href={`/invoices/${invoiceId}/edit`}
         className="px-3 py-1.5 rounded-md text-sm border border-gray-300 hover:bg-gray-100"
       >
-        Download PDF
-      </a>
+        Edit
+      </Link>
 
       {status !== "paid" && status !== "cancelled" && (
         <button

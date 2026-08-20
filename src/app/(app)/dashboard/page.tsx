@@ -49,7 +49,7 @@ export default async function DashboardPage() {
   const recent = allInvoices.slice(0, 8);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Link
@@ -82,7 +82,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-100">
                 <th className="px-5 py-2 font-medium">Number</th>
@@ -116,6 +117,7 @@ export default async function DashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
 type PdfStyle = any;
 
 export type InvoicePdfData = {
+  docType?: "invoice" | "quote";
   business: {
     name: string;
     email: string;
@@ -58,8 +59,10 @@ function money(amount: number, currency: string) {
 function statusColor(status: string) {
   switch (status) {
     case "paid":
+    case "accepted":
       return { backgroundColor: "#dcfce7", color: "#166534" };
     case "overdue":
+    case "declined":
       return { backgroundColor: "#fee2e2", color: "#991b1b" };
     case "sent":
       return { backgroundColor: "#dbeafe", color: "#1e40af" };
@@ -192,6 +195,7 @@ function NotesAndPayment({ data }: { data: InvoicePdfData }) {
 function ModernLayout({ data }: { data: InvoicePdfData }) {
   const { business, client, invoice } = data;
   const accent = business.brandColor || "#111827";
+  const isQuote = data.docType === "quote";
   return (
     <Page size="A4" style={base.page}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 24 }}>
@@ -204,12 +208,18 @@ function ModernLayout({ data }: { data: InvoicePdfData }) {
           {business.vatNumber && <Text style={base.small}>VAT: {business.vatNumber}</Text>}
         </View>
         <View>
-          <Text style={{ fontSize: 22, fontWeight: 700, textAlign: "right", color: accent }}>INVOICE</Text>
-          <Text style={{ fontSize: 9, color: "#6b7280", textAlign: "right" }}>Invoice #</Text>
+          <Text style={{ fontSize: 22, fontWeight: 700, textAlign: "right", color: accent }}>
+            {isQuote ? "QUOTE" : "INVOICE"}
+          </Text>
+          <Text style={{ fontSize: 9, color: "#6b7280", textAlign: "right" }}>
+            {isQuote ? "Quote #" : "Invoice #"}
+          </Text>
           <Text style={{ fontSize: 10, textAlign: "right", marginBottom: 6 }}>{invoice.number}</Text>
           <Text style={{ fontSize: 9, color: "#6b7280", textAlign: "right" }}>Issue date</Text>
           <Text style={{ fontSize: 10, textAlign: "right", marginBottom: 6 }}>{invoice.issueDate}</Text>
-          <Text style={{ fontSize: 9, color: "#6b7280", textAlign: "right" }}>Due date</Text>
+          <Text style={{ fontSize: 9, color: "#6b7280", textAlign: "right" }}>
+            {isQuote ? "Valid until" : "Due date"}
+          </Text>
           <Text style={{ fontSize: 10, textAlign: "right", marginBottom: 6 }}>{invoice.dueDate}</Text>
           <View style={[base.statusBadge, statusColor(invoice.status), { alignSelf: "flex-end" }]}>
             <Text>{invoice.status.toUpperCase()}</Text>
@@ -243,6 +253,7 @@ function ModernLayout({ data }: { data: InvoicePdfData }) {
 function ClassicLayout({ data }: { data: InvoicePdfData }) {
   const { business, client, invoice } = data;
   const accent = business.brandColor || "#111827";
+  const isQuote = data.docType === "quote";
   return (
     <Page size="A4" style={[base.page, { fontFamily: "Times-Roman" }]}>
       <View style={{ alignItems: "center", marginBottom: 20 }}>
@@ -252,7 +263,7 @@ function ClassicLayout({ data }: { data: InvoicePdfData }) {
         {business.email && <Text style={base.small}>{business.email}</Text>}
         {business.vatNumber && <Text style={base.small}>VAT: {business.vatNumber}</Text>}
         <Text style={{ fontSize: 16, fontWeight: 700, color: accent, marginTop: 14, letterSpacing: 2 }}>
-          INVOICE
+          {isQuote ? "QUOTE" : "INVOICE"}
         </Text>
         <View style={{ borderBottomWidth: 1.5, borderBottomColor: accent, width: 120, marginTop: 6 }} />
       </View>
@@ -266,9 +277,9 @@ function ClassicLayout({ data }: { data: InvoicePdfData }) {
           {client.vatNumber && <Text style={base.small}>VAT: {client.vatNumber}</Text>}
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={base.small}>Invoice # {invoice.number}</Text>
+          <Text style={base.small}>{isQuote ? "Quote" : "Invoice"} # {invoice.number}</Text>
           <Text style={base.small}>Issued {invoice.issueDate}</Text>
-          <Text style={base.small}>Due {invoice.dueDate}</Text>
+          <Text style={base.small}>{isQuote ? "Valid until" : "Due"} {invoice.dueDate}</Text>
           <View style={[base.statusBadge, statusColor(invoice.status)]}>
             <Text>{invoice.status.toUpperCase()}</Text>
           </View>
@@ -293,6 +304,7 @@ function ClassicLayout({ data }: { data: InvoicePdfData }) {
 function MinimalLayout({ data }: { data: InvoicePdfData }) {
   const { business, client, invoice } = data;
   const accent = business.brandColor || "#111827";
+  const isQuote = data.docType === "quote";
   return (
     <Page size="A4" style={base.page}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 30 }}>
@@ -305,11 +317,11 @@ function MinimalLayout({ data }: { data: InvoicePdfData }) {
         </View>
         <View style={{ alignItems: "flex-end" }}>
           <Text style={{ fontSize: 16, fontWeight: 300, letterSpacing: 3, textTransform: "uppercase" }}>
-            Invoice
+            {isQuote ? "Quote" : "Invoice"}
           </Text>
           <Text style={[base.small, { marginTop: 8 }]}>#{invoice.number}</Text>
           <Text style={base.small}>Issued {invoice.issueDate}</Text>
-          <Text style={base.small}>Due {invoice.dueDate}</Text>
+          <Text style={base.small}>{isQuote ? "Valid until" : "Due"} {invoice.dueDate}</Text>
           <Text style={{ fontSize: 9, fontWeight: 700, color: accent, marginTop: 4 }}>
             {invoice.status.toUpperCase()}
           </Text>

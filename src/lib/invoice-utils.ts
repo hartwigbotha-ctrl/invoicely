@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { businesses, invoices } from "@/db/schema";
+import { businesses, invoices, quotes } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export type LineItemInput = {
@@ -44,6 +44,23 @@ export async function nextInvoiceNumber(businessId: string) {
   return `${business.invoicePrefix}-${padded}`;
 }
 
+/** Same idea as nextInvoiceNumber, but for quotes/estimates. */
+export async function nextQuoteNumber(businessId: string) {
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+  });
+  if (!business) throw new Error("Business not found");
+
+  const seq = business.nextQuoteSeq;
+  await db
+    .update(businesses)
+    .set({ nextQuoteSeq: seq + 1 })
+    .where(eq(businesses.id, businessId));
+
+  const padded = String(seq).padStart(4, "0");
+  return `${business.quotePrefix}-${padded}`;
+}
+
 export function statusLabel(status: string) {
   switch (status) {
     case "draft":
@@ -56,6 +73,12 @@ export function statusLabel(status: string) {
       return "Overdue";
     case "cancelled":
       return "Cancelled";
+    case "accepted":
+      return "Accepted";
+    case "declined":
+      return "Declined";
+    case "expired":
+      return "Expired";
     default:
       return status;
   }
@@ -69,5 +92,16 @@ export async function sweepOverdueInvoices(businessId: string) {
     .set({ status: "overdue" })
     .where(
       sql`${invoices.businessId} = ${businessId} and ${invoices.status} = 'sent' and ${invoices.dueDate} < ${today}`
+    );
+}
+
+/** Marks any sent quotes past their expiry date as expired. Call on quotes list/dashboard loads. */
+export async function sweepExpiredQuotes(businessId: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  await db
+    .update(quotes)
+    .set({ status: "expired" })
+    .where(
+      sql`${quotes.businessId} = ${businessId} and ${quotes.status} = 'sent' and ${quotes.expiryDate} < ${today}`
     );
 }

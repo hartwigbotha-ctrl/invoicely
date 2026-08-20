@@ -1,10 +1,11 @@
 import { requireBusiness } from "@/lib/session";
 import { db } from "@/db";
-import { invoices } from "@/db/schema";
+import { quotes } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { statusLabel } from "@/lib/invoice-utils";
-import { InvoiceActions } from "./invoice-actions";
+import { QuoteActions } from "./quote-actions";
 
 function money(amount: number, currency: string) {
   try {
@@ -17,12 +18,12 @@ function money(amount: number, currency: string) {
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   sent: "bg-blue-100 text-blue-700",
-  paid: "bg-green-100 text-green-700",
-  overdue: "bg-red-100 text-red-700",
-  cancelled: "bg-gray-100 text-gray-500",
+  accepted: "bg-green-100 text-green-700",
+  declined: "bg-red-100 text-red-700",
+  expired: "bg-gray-100 text-gray-500",
 };
 
-export default async function InvoiceDetailPage({
+export default async function QuoteDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -30,31 +31,39 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
   const { business } = await requireBusiness();
 
-  const invoice = await db.query.invoices.findFirst({
-    where: and(eq(invoices.id, id), eq(invoices.businessId, business.id)),
+  const quote = await db.query.quotes.findFirst({
+    where: and(eq(quotes.id, id), eq(quotes.businessId, business.id)),
     with: { client: true, lineItems: true },
   });
-  if (!invoice) notFound();
+  if (!quote) notFound();
 
-  const lineItems = [...invoice.lineItems].sort((a, b) => a.sortOrder - b.sortOrder);
+  const lineItems = [...quote.lineItems].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{invoice.number}</h1>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[invoice.status]}`}>
-              {statusLabel(invoice.status)}
+            <h1 className="text-2xl font-bold">{quote.number}</h1>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[quote.status]}`}>
+              {statusLabel(quote.status)}
             </span>
           </div>
-          <p className="text-gray-600 mt-1">{invoice.client.name}</p>
+          <p className="text-gray-600 mt-1">{quote.client.name}</p>
+          {quote.convertedInvoiceId && (
+            <p className="text-sm mt-1">
+              <Link href={`/invoices/${quote.convertedInvoiceId}`} className="text-gray-900 underline">
+                View converted invoice
+              </Link>
+            </p>
+          )}
         </div>
-        <InvoiceActions
-          invoiceId={invoice.id}
-          invoiceNumber={invoice.number}
-          status={invoice.status}
-          hasClientEmail={!!invoice.client.email}
+        <QuoteActions
+          quoteId={quote.id}
+          quoteNumber={quote.number}
+          status={quote.status}
+          hasClientEmail={!!quote.client.email}
+          alreadyConverted={!!quote.convertedInvoiceId}
         />
       </div>
 
@@ -62,15 +71,15 @@ export default async function InvoiceDetailPage({
         <div className="grid sm:grid-cols-3 gap-4 mb-6 text-sm">
           <div>
             <p className="text-gray-500">Issue date</p>
-            <p className="font-medium">{invoice.issueDate}</p>
+            <p className="font-medium">{quote.issueDate}</p>
           </div>
           <div>
-            <p className="text-gray-500">Due date</p>
-            <p className="font-medium">{invoice.dueDate}</p>
+            <p className="text-gray-500">Valid until</p>
+            <p className="font-medium">{quote.expiryDate}</p>
           </div>
           <div>
-            <p className="text-gray-500">Amount paid</p>
-            <p className="font-medium">{money(invoice.amountPaid, invoice.currency)}</p>
+            <p className="text-gray-500">Total</p>
+            <p className="font-medium">{money(quote.total, quote.currency)}</p>
           </div>
         </div>
 
@@ -89,8 +98,8 @@ export default async function InvoiceDetailPage({
                 <tr key={li.id} className="border-b border-gray-50">
                   <td className="py-2">{li.description}</td>
                   <td className="py-2 text-right">{li.quantity}</td>
-                  <td className="py-2 text-right">{money(li.unitPrice, invoice.currency)}</td>
-                  <td className="py-2 text-right">{money(li.amount, invoice.currency)}</td>
+                  <td className="py-2 text-right">{money(li.unitPrice, quote.currency)}</td>
+                  <td className="py-2 text-right">{money(li.amount, quote.currency)}</td>
                 </tr>
               ))}
             </tbody>
@@ -101,23 +110,23 @@ export default async function InvoiceDetailPage({
           <div className="w-56 text-sm space-y-1">
             <div className="flex justify-between">
               <span className="text-gray-500">Subtotal</span>
-              <span>{money(invoice.subtotal, invoice.currency)}</span>
+              <span>{money(quote.subtotal, quote.currency)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Tax ({invoice.taxRate}%)</span>
-              <span>{money(invoice.taxAmount, invoice.currency)}</span>
+              <span className="text-gray-500">Tax ({quote.taxRate}%)</span>
+              <span>{money(quote.taxAmount, quote.currency)}</span>
             </div>
             <div className="flex justify-between font-semibold text-base pt-2 border-t border-gray-200">
               <span>Total</span>
-              <span>{money(invoice.total, invoice.currency)}</span>
+              <span>{money(quote.total, quote.currency)}</span>
             </div>
           </div>
         </div>
 
-        {invoice.notes && (
+        {quote.notes && (
           <div className="mt-6 pt-6 border-t border-gray-200 text-sm">
             <p className="text-gray-500 mb-1">Notes</p>
-            <p>{invoice.notes}</p>
+            <p>{quote.notes}</p>
           </div>
         )}
       </div>

@@ -87,6 +87,60 @@ export async function createInvoice(formData: FormData) {
   redirect(`/invoices/${invoiceId}`);
 }
 
+export async function updateInvoice(invoiceId: string, formData: FormData) {
+  const { business } = await requireBusiness();
+
+  const existing = await db.query.invoices.findFirst({
+    where: and(eq(invoices.id, invoiceId), eq(invoices.businessId, business.id)),
+  });
+  if (!existing) throw new Error("Invoice not found");
+
+  const clientId = formData.get("clientId") as string;
+  const taxRate = Number(formData.get("taxRate") || business.defaultTaxRate);
+  const issueDate = (formData.get("issueDate") as string) || existing.issueDate;
+  const dueDate = (formData.get("dueDate") as string) || existing.dueDate;
+  const notes = (formData.get("notes") as string) || null;
+
+  const client = await db.query.clients.findFirst({
+    where: and(eq(clients.id, clientId), eq(clients.businessId, business.id)),
+  });
+  if (!client) throw new Error("Client not found");
+
+  const lineItems = parseLineItems(formData);
+  const { subtotal, taxAmount, total } = calcTotals(lineItems, taxRate);
+
+  await db
+    .update(invoices)
+    .set({
+      clientId,
+      issueDate,
+      dueDate,
+      notes,
+      taxRate,
+      subtotal,
+      taxAmount,
+      total,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(invoices.id, invoiceId));
+
+  await db.delete(invoiceLineItems).where(eq(invoiceLineItems.invoiceId, invoiceId));
+  await db.insert(invoiceLineItems).values(
+    lineItems.map((li, i) => ({
+      invoiceId,
+      description: li.description,
+      quantity: li.quantity,
+      unitPrice: li.unitPrice,
+      amount: Math.round(li.quantity * li.unitPrice * 100) / 100,
+      sortOrder: i,
+    }))
+  );
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  redirect(`/invoices/${invoiceId}`);
+}
+
 export async function deleteInvoice(invoiceId: string) {
   const { business } = await requireBusiness();
   await db

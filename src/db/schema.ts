@@ -35,6 +35,8 @@ export const businesses = sqliteTable("businesses", {
   pdfTemplate: text("pdf_template").notNull().default("modern"), // modern | classic | minimal
   invoicePrefix: text("invoice_prefix").notNull().default("INV"),
   nextInvoiceSeq: integer("next_invoice_seq").notNull().default(1),
+  quotePrefix: text("quote_prefix").notNull().default("QUO"),
+  nextQuoteSeq: integer("next_quote_seq").notNull().default(1),
   currency: text("currency").notNull().default("ZAR"),
   defaultTaxRate: real("default_tax_rate").notNull().default(15), // % VAT default
   bankDetails: text("bank_details"), // free text: bank, account, branch code
@@ -47,6 +49,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   clients: many(clients),
   items: many(items),
   invoices: many(invoices),
+  quotes: many(quotes),
   recurringSchedules: many(recurringSchedules),
   subscriptions: many(subscriptions),
 }));
@@ -92,6 +95,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     references: [businesses.id],
   }),
   invoices: many(invoices),
+  quotes: many(quotes),
   recurringSchedules: many(recurringSchedules),
 }));
 
@@ -221,6 +225,68 @@ export const invoiceLineItemsRelations = relations(
     }),
   })
 );
+
+// ---------- Quotes / Estimates ----------
+export const quotes = sqliteTable("quotes", {
+  id: id(),
+  businessId: text("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => clients.id, { onDelete: "restrict" }),
+  number: text("number").notNull(), // e.g. QUO-0001
+  status: text("status").notNull().default("draft"), // draft|sent|accepted|declined|expired
+  issueDate: text("issue_date").notNull(),
+  expiryDate: text("expiry_date").notNull(),
+  currency: text("currency").notNull().default("ZAR"),
+  subtotal: real("subtotal").notNull().default(0),
+  taxRate: real("tax_rate").notNull().default(0),
+  taxAmount: real("tax_amount").notNull().default(0),
+  total: real("total").notNull().default(0),
+  notes: text("notes"),
+  sentAt: text("sent_at"),
+  respondedAt: text("responded_at"),
+  convertedInvoiceId: text("converted_invoice_id").references(() => invoices.id, {
+    onDelete: "set null",
+  }),
+  ...timestamps,
+});
+
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [quotes.businessId],
+    references: [businesses.id],
+  }),
+  client: one(clients, {
+    fields: [quotes.clientId],
+    references: [clients.id],
+  }),
+  lineItems: many(quoteLineItems),
+  convertedInvoice: one(invoices, {
+    fields: [quotes.convertedInvoiceId],
+    references: [invoices.id],
+  }),
+}));
+
+export const quoteLineItems = sqliteTable("quote_line_items", {
+  id: id(),
+  quoteId: text("quote_id")
+    .notNull()
+    .references(() => quotes.id, { onDelete: "cascade" }),
+  description: text("description").notNull(),
+  quantity: real("quantity").notNull().default(1),
+  unitPrice: real("unit_price").notNull().default(0),
+  amount: real("amount").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const quoteLineItemsRelations = relations(quoteLineItems, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteLineItems.quoteId],
+    references: [quotes.id],
+  }),
+}));
 
 // ---------- Payments ----------
 export const payments = sqliteTable("payments", {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
-type Row = { description: string; quantity: string; unitPrice: string };
+export type Row = { description: string; quantity: string; unitPrice: string };
 export type SavedItem = { id: string; code: string | null; name: string; defaultPrice: number };
 
 export function LineItemsEditor({

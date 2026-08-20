@@ -53,3 +53,36 @@ export async function sendInvoiceEmail(opts: {
 
   return info;
 }
+
+export async function sendQuoteEmail(opts: {
+  to: string;
+  businessName: string;
+  quoteNumber: string;
+  total: string;
+  expiryDate: string;
+  pdfBuffer: Buffer;
+  message?: string;
+}) {
+  const t = getTransporter();
+  const info = await t.sendMail({
+    from: process.env.SMTP_FROM || `"${opts.businessName}" <no-reply@invoicing.local>`,
+    to: opts.to,
+    subject: `Quote ${opts.quoteNumber} from ${opts.businessName}`,
+    text:
+      opts.message ||
+      `Hi,\n\nPlease find attached quote ${opts.quoteNumber} for ${opts.total}, valid until ${opts.expiryDate}.\n\nThank you,\n${opts.businessName}`,
+    attachments: [
+      {
+        filename: `${opts.quoteNumber}.pdf`,
+        content: opts.pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+
+  if (!process.env.SMTP_HOST) {
+    console.log(`[mailer] SMTP not configured — email logged only. To: ${opts.to}, Quote: ${opts.quoteNumber}`);
+  }
+
+  return info;
+}

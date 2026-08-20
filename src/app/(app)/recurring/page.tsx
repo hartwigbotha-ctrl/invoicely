@@ -14,7 +14,7 @@ export default async function RecurringPage() {
   });
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Recurring invoices</h1>
@@ -39,7 +39,8 @@ export default async function RecurringPage() {
             </Link>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-100">
                 <th className="px-5 py-2 font-medium">Title</th>
@@ -77,6 +78,7 @@ export default async function RecurringPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
