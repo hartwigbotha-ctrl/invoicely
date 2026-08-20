@@ -82,9 +82,13 @@ export const clients = sqliteTable("clients", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   email: text("email"),
+  address: text("address"), // billing address
+  contactName: text("contact_name"),
   phone: text("phone"),
-  address: text("address"),
-  vatNumber: text("vat_number"),
+  mobile: text("mobile"),
+  website: text("website"),
+  vatNumber: text("vat_number"), // tax number
+  customPaymentTermsDays: integer("custom_payment_terms_days"), // null = business default
   notes: text("notes"),
   ...timestamps,
 });
@@ -107,7 +111,11 @@ export const items = sqliteTable("items", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   code: text("code"), // optional SKU/reference code, e.g. "Metro Fibre - PTP"
   name: text("name").notNull(),
-  defaultPrice: real("default_price").notNull().default(0),
+  description: text("description"),
+  defaultPrice: real("default_price").notNull().default(0), // "Rate"
+  cost: real("cost").notNull().default(0),
+  unitType: text("unit_type"), // e.g. Hours, Days, Units — null = None
+  taxable: integer("taxable", { mode: "boolean" }).notNull().default(true),
   ...timestamps,
 });
 

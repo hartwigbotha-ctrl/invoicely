@@ -51,7 +51,9 @@ export default async function ItemsPage() {
               <tr className="text-left text-gray-500 border-b border-gray-100">
                 <th className="px-5 py-2 font-medium">Code</th>
                 <th className="px-5 py-2 font-medium">Name</th>
-                <th className="px-5 py-2 font-medium text-right">Default price</th>
+                <th className="px-5 py-2 font-medium">Unit type</th>
+                <th className="px-5 py-2 font-medium text-right">Rate</th>
+                <th className="px-5 py-2 font-medium text-right">Cost</th>
                 <th className="px-5 py-2 font-medium"></th>
               </tr>
             </thead>
@@ -63,8 +65,13 @@ export default async function ItemsPage() {
                     <Link href={`/items/${it.id}`} className="font-medium hover:underline">
                       {it.name}
                     </Link>
+                    {it.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 max-w-xs truncate">{it.description}</p>
+                    )}
                   </td>
+                  <td className="px-5 py-3 text-gray-600">{it.unitType || "None"}</td>
                   <td className="px-5 py-3 text-right">{money(it.defaultPrice, business.currency)}</td>
+                  <td className="px-5 py-3 text-right text-gray-600">{money(it.cost, business.currency)}</td>
                   <td className="px-5 py-3 text-right">
                     <DeleteItemButton itemId={it.id} />
                   </td>

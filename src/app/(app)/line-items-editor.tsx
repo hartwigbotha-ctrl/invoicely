@@ -5,7 +5,13 @@ import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export type Row = { description: string; quantity: string; unitPrice: string };
-export type SavedItem = { id: string; code: string | null; name: string; defaultPrice: number };
+export type SavedItem = {
+  id: string;
+  code: string | null;
+  name: string;
+  description?: string | null;
+  defaultPrice: number;
+};
 
 export function LineItemsEditor({
   initialRows,
@@ -36,7 +42,7 @@ export function LineItemsEditor({
   function addFromCatalog(itemId: string) {
     const item = savedItems?.find((it) => it.id === itemId);
     if (!item) return;
-    const label = item.code ? `${item.name}` : item.name;
+    const label = item.description?.trim() ? item.description : item.name;
     setRows((prev) => {
       // If the only row is still empty, fill it instead of appending a new one.
       if (prev.length === 1 && !prev[0].description && !prev[0].unitPrice) {
