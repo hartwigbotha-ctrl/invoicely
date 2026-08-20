@@ -46,12 +46,14 @@ export default async function EditInvoicePage({
         allClients={allClients}
         savedItems={savedItems}
         submitLabel="Save changes"
+        showStatus
         defaultValues={{
           clientId: invoice.clientId,
           taxRate: invoice.taxRate,
           issueDate: invoice.issueDate,
           dueDate: invoice.dueDate,
           notes: invoice.notes,
+          status: invoice.status,
           lineItems: sortedLineItems.map((li) => ({
             description: li.description,
             quantity: String(li.quantity),

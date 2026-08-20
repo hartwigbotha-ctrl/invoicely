@@ -39,12 +39,14 @@ export default async function EditQuotePage({
         allClients={allClients}
         savedItems={savedItems}
         submitLabel="Save changes"
+        showStatus
         defaultValues={{
           clientId: quote.clientId,
           taxRate: quote.taxRate,
           issueDate: quote.issueDate,
           expiryDate: quote.expiryDate,
           notes: quote.notes,
+          status: quote.status,
           lineItems: sortedLineItems.map((li) => ({
             description: li.description,
             quantity: String(li.quantity),

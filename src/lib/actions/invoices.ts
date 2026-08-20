@@ -100,6 +100,11 @@ export async function updateInvoice(invoiceId: string, formData: FormData) {
   const issueDate = (formData.get("issueDate") as string) || existing.issueDate;
   const dueDate = (formData.get("dueDate") as string) || existing.dueDate;
   const notes = (formData.get("notes") as string) || null;
+  const statusInput = formData.get("status") as string;
+  const status =
+    statusInput && ["draft", "sent", "paid", "overdue", "cancelled"].includes(statusInput)
+      ? statusInput
+      : existing.status;
 
   const client = await db.query.clients.findFirst({
     where: and(eq(clients.id, clientId), eq(clients.businessId, business.id)),
@@ -120,6 +125,12 @@ export async function updateInvoice(invoiceId: string, formData: FormData) {
       subtotal,
       taxAmount,
       total,
+      status,
+      // Fixing a mistaken "Paid" status back to something else should also
+      // clear the amount-paid/paid-at markers, so the invoice doesn't show
+      // as paid on the dashboard/list while its status says otherwise.
+      amountPaid: status === "paid" ? Math.max(existing.amountPaid, total) : status === existing.status ? existing.amountPaid : 0,
+      paidAt: status === "paid" ? existing.paidAt || new Date().toISOString() : status === existing.status ? existing.paidAt : null,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(invoices.id, invoiceId));

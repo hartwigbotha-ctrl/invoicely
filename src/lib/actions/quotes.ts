@@ -100,6 +100,11 @@ export async function updateQuote(quoteId: string, formData: FormData) {
   const issueDate = (formData.get("issueDate") as string) || existing.issueDate;
   const expiryDate = (formData.get("expiryDate") as string) || existing.expiryDate;
   const notes = (formData.get("notes") as string) || null;
+  const statusInput = formData.get("status") as string;
+  const status =
+    statusInput && ["draft", "sent", "accepted", "declined", "expired"].includes(statusInput)
+      ? statusInput
+      : existing.status;
 
   const client = await db.query.clients.findFirst({
     where: and(eq(clients.id, clientId), eq(clients.businessId, business.id)),
@@ -120,6 +125,13 @@ export async function updateQuote(quoteId: string, formData: FormData) {
       subtotal,
       taxAmount,
       total,
+      status,
+      respondedAt:
+        status === "accepted" || status === "declined"
+          ? existing.respondedAt || new Date().toISOString()
+          : status === existing.status
+          ? existing.respondedAt
+          : null,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(quotes.id, quoteId));

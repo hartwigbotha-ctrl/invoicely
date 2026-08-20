@@ -10,6 +10,7 @@ export function QuoteForm({
   savedItems,
   submitLabel,
   defaultValues,
+  showStatus,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: any;
@@ -23,7 +24,10 @@ export function QuoteForm({
     expiryDate: string;
     notes?: string | null;
     lineItems?: Row[];
+    status?: string;
   };
+  /** Only shown on the edit form — a new quote always starts as a draft. */
+  showStatus?: boolean;
 }) {
   return (
     <form action={action} className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
@@ -71,6 +75,25 @@ export function QuoteForm({
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
         </div>
+        {showStatus && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              name="status"
+              defaultValue={defaultValues.status || "draft"}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            >
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="accepted">Accepted</option>
+              <option value="declined">Declined</option>
+              <option value="expired">Expired</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Fix a mistaken status here — e.g. undo an accidental &quot;Accepted&quot;.
+            </p>
+          </div>
+        )}
       </div>
 
       <div>
