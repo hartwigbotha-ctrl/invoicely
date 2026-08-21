@@ -19,6 +19,7 @@ export async function updateBusinessSettings(formData: FormData) {
     vatNumber: (formData.get("vatNumber") as string) || null,
     regNumber: (formData.get("regNumber") as string) || null,
     invoicePrefix: (formData.get("invoicePrefix") as string) || "INV",
+    quotePrefix: (formData.get("quotePrefix") as string) || "QUO",
     currency: (formData.get("currency") as string) || "ZAR",
     defaultTaxRate: Number(formData.get("defaultTaxRate") || 0),
     paymentTermsDays: Number(formData.get("paymentTermsDays") || 7),
@@ -27,6 +28,19 @@ export async function updateBusinessSettings(formData: FormData) {
     pdfTemplate: (formData.get("pdfTemplate") as string) || "modern",
     updatedAt: new Date().toISOString(),
   };
+
+  // "Next invoice/quote number" — lets a business migrating from an old
+  // system (spreadsheets, another tool) continue their existing numbering
+  // instead of resetting to 0001. Only touch it if a valid positive number
+  // was submitted, so leaving the field alone never breaks numbering.
+  const nextInvoiceSeq = Number(formData.get("nextInvoiceSeq"));
+  if (Number.isFinite(nextInvoiceSeq) && nextInvoiceSeq >= 1) {
+    update.nextInvoiceSeq = Math.floor(nextInvoiceSeq);
+  }
+  const nextQuoteSeq = Number(formData.get("nextQuoteSeq"));
+  if (Number.isFinite(nextQuoteSeq) && nextQuoteSeq >= 1) {
+    update.nextQuoteSeq = Math.floor(nextQuoteSeq);
+  }
 
   // Logo upload is optional on every save — only touch logoUrl if a new
   // file was actually picked, or if the user explicitly asked to remove it.
