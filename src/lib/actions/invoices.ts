@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { calcTotals, nextInvoiceNumber, type LineItemInput } from "@/lib/invoice-utils";
 import { generateInvoicePdf } from "@/lib/invoice-pdf";
 import { sendInvoiceEmail } from "@/lib/mailer";
+import { checkMonthlyDocumentLimit } from "@/lib/plan-access";
 import { addDays, formatISO } from "date-fns";
 
 function parseLineItems(formData: FormData): LineItemInput[] {
@@ -34,6 +35,10 @@ function parseLineItems(formData: FormData): LineItemInput[] {
 
 export async function createInvoice(formData: FormData) {
   const { business } = await requireBusiness();
+  const limitCheck = await checkMonthlyDocumentLimit(business.id);
+  if (!limitCheck.ok) {
+    redirect(`/invoices/new?limitReached=${limitCheck.limit}&plan=${encodeURIComponent(limitCheck.planName)}`);
+  }
 
   const clientId = formData.get("clientId") as string;
   const taxRate = Number(formData.get("taxRate") || business.defaultTaxRate);

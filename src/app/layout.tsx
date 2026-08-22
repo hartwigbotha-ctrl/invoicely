@@ -3,6 +3,15 @@ import "./globals.css";
 import { RegisterServiceWorker } from "./register-sw";
 import { InstallButton } from "./install-button";
 
+// Force every route to render per-request instead of being statically
+// optimized at build time. Without this, Next.js can prerender pages that
+// gate on the signed-in user's session (via requireBusiness()/auth()) and
+// then serve that single build-time snapshot — including its Server Action
+// result — to every visitor, regardless of who's actually logged in. That
+// showed up as: any form submission (new client, new invoice, etc.) reusing
+// a stale cached "no session" outcome and bouncing everyone to /login.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Invoicely — Simple Invoicing for Contractors & SMMEs",
   description: "Create, send, and auto-generate invoices for your small business.",

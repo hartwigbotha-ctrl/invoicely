@@ -4,11 +4,17 @@ import { clients, items } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { createQuote } from "@/lib/actions/quotes";
 import { QuoteForm } from "../quote-form";
+import { LimitBanner } from "../../limit-banner";
 import { formatISO, addDays } from "date-fns";
 import Link from "next/link";
 
-export default async function NewQuotePage() {
+export default async function NewQuotePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ limitReached?: string; plan?: string }>;
+}) {
   const { business } = await requireBusiness();
+  const { limitReached, plan } = await searchParams;
   const allClients = await db.query.clients.findMany({
     where: eq(clients.businessId, business.id),
   });
@@ -38,6 +44,7 @@ export default async function NewQuotePage() {
   return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-8">New quote</h1>
+      {limitReached && <LimitBanner limit={limitReached} planName={plan ?? "Starter"} />}
       <QuoteForm
         action={createQuote}
         allClients={allClients}

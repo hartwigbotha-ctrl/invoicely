@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { calcTotals, nextQuoteNumber, nextInvoiceNumber, type LineItemInput } from "@/lib/invoice-utils";
 import { generateInvoicePdf } from "@/lib/invoice-pdf";
 import { sendQuoteEmail } from "@/lib/mailer";
+import { checkMonthlyDocumentLimit } from "@/lib/plan-access";
 import { addDays, formatISO } from "date-fns";
 
 function parseLineItems(formData: FormData): LineItemInput[] {
@@ -34,6 +35,10 @@ function parseLineItems(formData: FormData): LineItemInput[] {
 
 export async function createQuote(formData: FormData) {
   const { business } = await requireBusiness();
+  const limitCheck = await checkMonthlyDocumentLimit(business.id);
+  if (!limitCheck.ok) {
+    redirect(`/quotes/new?limitReached=${limitCheck.limit}&plan=${encodeURIComponent(limitCheck.planName)}`);
+  }
 
   const clientId = formData.get("clientId") as string;
   const taxRate = Number(formData.get("taxRate") || business.defaultTaxRate);
@@ -238,6 +243,10 @@ export async function markQuoteResponded(quoteId: string, accepted: boolean) {
 /** Creates a new draft invoice from an accepted (or any) quote's client + line items. */
 export async function convertQuoteToInvoice(quoteId: string) {
   const { business } = await requireBusiness();
+  const limitCheck = await checkMonthlyDocumentLimit(business.id);
+  if (!limitCheck.ok) {
+    redirect(`/quotes/${quoteId}?limitReached=${limitCheck.limit}&plan=${encodeURIComponent(limitCheck.planName)}`);
+  }
   const quote = await loadFullQuote(quoteId, business.id);
 
   const number = await nextInvoiceNumber(business.id);

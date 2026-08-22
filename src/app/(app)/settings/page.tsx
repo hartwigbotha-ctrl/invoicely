@@ -168,6 +168,7 @@ export default async function SettingsPage() {
               name="nextInvoiceSeq"
               label="Next invoice number"
               type="number"
+              min={1}
               defaultValue={String(business.nextInvoiceSeq)}
               help="Already using invoice numbers elsewhere? Set this to continue from where you left off."
             />
@@ -180,19 +181,23 @@ export default async function SettingsPage() {
               name="nextQuoteSeq"
               label="Next quote number"
               type="number"
+              min={1}
               defaultValue={String(business.nextQuoteSeq)}
               help="Same idea, for quotes."
             />
             <Field
               name="defaultTaxRate"
-              label="Default tax rate (%)"
+              label="VAT rate (%)"
               type="number"
+              min={0}
               defaultValue={String(business.defaultTaxRate)}
+              help="Not registered for VAT? Leave this at 0 — you're not required to charge it."
             />
             <Field
               name="paymentTermsDays"
               label="Default payment terms (days)"
               type="number"
+              min={0}
               defaultValue={String(business.paymentTermsDays)}
             />
           </div>
@@ -254,6 +259,7 @@ function Field({
   required,
   textarea,
   help,
+  min,
 }: {
   name: string;
   label: string;
@@ -262,6 +268,7 @@ function Field({
   required?: boolean;
   textarea?: boolean;
   help?: string;
+  min?: number;
 }) {
   return (
     <div>
@@ -281,7 +288,7 @@ function Field({
           id={name}
           name={name}
           type={type}
-          min={type === "number" ? 1 : undefined}
+          min={type === "number" ? min : undefined}
           defaultValue={defaultValue}
           required={required}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"

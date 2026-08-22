@@ -10,6 +10,9 @@ export default auth(function proxy(req) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/clients") ||
     pathname.startsWith("/invoices") ||
+    pathname.startsWith("/quotes") ||
+    pathname.startsWith("/items") ||
+    pathname.startsWith("/imports") ||
     pathname.startsWith("/recurring") ||
     pathname.startsWith("/settings");
 
@@ -27,5 +30,16 @@ export default auth(function proxy(req) {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/clients/:path*", "/invoices/:path*", "/recurring/:path*", "/settings/:path*", "/login", "/register"],
+  matcher: [
+    "/dashboard/:path*",
+    "/clients/:path*",
+    "/invoices/:path*",
+    "/quotes/:path*",
+    "/items/:path*",
+    "/imports/:path*",
+    "/recurring/:path*",
+    "/settings/:path*",
+    "/login",
+    "/register",
+  ],
 };

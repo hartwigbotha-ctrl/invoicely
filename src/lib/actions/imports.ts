@@ -15,7 +15,7 @@ import { requireBusiness } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseUploadedFile } from "@/lib/document-parse-file";
-import { hasProAccess } from "@/lib/plan-access";
+import { hasProAccess, checkMonthlyDocumentLimit } from "@/lib/plan-access";
 import { calcTotals, nextInvoiceNumber, nextQuoteNumber } from "@/lib/invoice-utils";
 import { formatISO } from "date-fns";
 import type { ExtractedDocument } from "@/lib/document-extract";
@@ -121,6 +121,10 @@ function parseLineItemsFromForm(formData: FormData) {
 export async function confirmImport(importId: string, formData: FormData) {
   const { business } = await requireBusiness();
   await requireProAccess(business.id);
+  const limitCheck = await checkMonthlyDocumentLimit(business.id);
+  if (!limitCheck.ok) {
+    redirect(`/imports/${importId}?limitReached=${limitCheck.limit}&plan=${encodeURIComponent(limitCheck.planName)}`);
+  }
 
   const record = await db.query.documentImports.findFirst({
     where: and(eq(documentImports.id, importId), eq(documentImports.businessId, business.id)),

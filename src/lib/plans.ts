@@ -7,7 +7,7 @@
 export type PlanDefinition = {
   name: "Starter" | "Pro" | "Business";
   priceMonthly: number;
-  invoiceLimit: number | null; // null = unlimited
+  invoiceLimit: number | null; // combined invoices+quotes created per calendar month; null = unlimited
   clientLimit: number | null; // null = unlimited
   features: string[];
 };
@@ -16,10 +16,11 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     name: "Starter",
     priceMonthly: 85,
-    invoiceLimit: null,
+    invoiceLimit: 5,
     clientLimit: null,
     features: [
-      "Unlimited invoices, quotes & clients",
+      "5 invoices & quotes per month (combined)",
+      "Unlimited clients",
       "Saved items catalog",
       "Recurring auto-generated invoices",
       "Custom branding (logo, colors, 3 PDF templates)",

@@ -6,11 +6,19 @@ import { and, eq, desc } from "drizzle-orm";
 import { hasProAccess } from "@/lib/plan-access";
 import { confirmImport } from "@/lib/actions/imports";
 import { ImportReviewForm } from "./import-review-form";
+import { LimitBanner } from "../../limit-banner";
 import type { ExtractedDocument } from "@/lib/document-extract";
 import { formatISO } from "date-fns";
 
-export default async function ReviewImportPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ReviewImportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ limitReached?: string; plan?: string }>;
+}) {
   const { id } = await params;
+  const { limitReached, plan } = await searchParams;
   const { business } = await requireBusiness();
 
   const entitled = await hasProAccess(business.id);
@@ -51,6 +59,8 @@ export default async function ReviewImportPage({ params }: { params: Promise<{ i
     <div className="p-4 sm:p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Review import</h1>
       <p className="text-sm text-gray-600 mb-8 truncate">From: {record.fileName}</p>
+
+      {limitReached && <LimitBanner limit={limitReached} planName={plan ?? "Starter"} />}
 
       <ImportReviewForm
         action={confirmImport.bind(null, record.id)}
