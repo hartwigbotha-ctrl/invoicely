@@ -12,6 +12,12 @@ import crypto from "crypto";
 // PAYFAST_MERCHANT_KEY / PAYFAST_PASSPHRASE env vars on Railway).
 const SANDBOX_MERCHANT_ID = "10000100";
 const SANDBOX_MERCHANT_KEY = "46f0cd694581a";
+// PayFast's sandbox now requires this passphrase to be set (confirmed on
+// developers.payfast.co.za/docs, "Test transaction setup" — this used to be
+// blank, which is what caused every sandbox checkout to fail with
+// "signature does not match": PayFast was hashing with the passphrase
+// included and we weren't sending one at all.
+const SANDBOX_PASSPHRASE = "jt7NOE43FZPn";
 
 function isSandbox() {
   // Defaults to sandbox unless explicitly told this is a live deployment,
@@ -30,10 +36,11 @@ function getMerchantKey() {
 }
 
 function getPassphrase() {
-  // The sandbox test account has no passphrase configured; a live merchant
-  // account should always have one set (PayFast strongly recommends it —
-  // without it, ITN signatures are far easier to forge).
-  return process.env.PAYFAST_PASSPHRASE || "";
+  if (process.env.PAYFAST_PASSPHRASE) return process.env.PAYFAST_PASSPHRASE;
+  // Only fall back to the sandbox passphrase while actually in sandbox mode —
+  // a live deployment with no PAYFAST_PASSPHRASE set should sign with no
+  // passphrase rather than accidentally use PayFast's public test one.
+  return isSandbox() ? SANDBOX_PASSPHRASE : "";
 }
 
 export function getAppUrl(): string {
