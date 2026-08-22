@@ -1,5 +1,17 @@
 import nodemailer from "nodemailer";
 
+// Resend's sandbox-mode 403 has a long technical body; surface the
+// essential part in plain language instead of the raw API error text.
+// Shared by the invoice/quote send actions so a failed send shows a
+// useful message instead of crashing to the generic error page (thrown
+// Server Action error messages get stripped by Next.js in production).
+export function friendlyEmailError(raw: string): string {
+  if (raw.includes("verify a domain")) {
+    return "Emails can currently only be sent to your own account email while email sending is in test mode. Ask your Invoicely admin to verify a sending domain to email real clients.";
+  }
+  return "Couldn't send the email. Please try again, or let us know if this keeps happening.";
+}
+
 // Railway (like several PaaS hosts) blocks outbound SMTP traffic entirely
 // as an anti-spam measure — both port 465 and 587 to smtp.resend.com timed
 // out identically in testing, which is the signature of a blocked port

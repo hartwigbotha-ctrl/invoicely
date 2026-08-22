@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calcTotals, nextQuoteNumber, nextInvoiceNumber, type LineItemInput } from "@/lib/invoice-utils";
 import { generateInvoicePdf } from "@/lib/invoice-pdf";
-import { sendQuoteEmail } from "@/lib/mailer";
+import { sendQuoteEmail, friendlyEmailError } from "@/lib/mailer";
 import { checkMonthlyDocumentLimit } from "@/lib/plan-access";
 import { addDays, formatISO } from "date-fns";
 
@@ -185,12 +185,14 @@ export async function buildQuotePdfBuffer(quoteId: string, businessId: string) {
   });
 }
 
-export async function sendQuote(quoteId: string) {
+export type SendQuoteResult = { ok: true } | { ok: false; error: string };
+
+export async function sendQuote(quoteId: string): Promise<SendQuoteResult> {
   const { business } = await requireBusiness();
   const quote = await loadFullQuote(quoteId, business.id);
 
   if (!quote.client.email) {
-    throw new Error("This client has no email address on file.");
+    return { ok: false, error: "This client has no email address on file." };
   }
 
   const pdfBuffer = await generateInvoicePdf({
@@ -201,14 +203,20 @@ export async function sendQuote(quoteId: string) {
     lineItems: quote.lineItems.sort((a, b) => a.sortOrder - b.sortOrder),
   });
 
-  await sendQuoteEmail({
-    to: quote.client.email,
-    businessName: quote.business.name,
-    quoteNumber: quote.number,
-    total: `${quote.currency} ${quote.total.toFixed(2)}`,
-    expiryDate: quote.expiryDate,
-    pdfBuffer,
-  });
+  try {
+    await sendQuoteEmail({
+      to: quote.client.email,
+      businessName: quote.business.name,
+      quoteNumber: quote.number,
+      total: `${quote.currency} ${quote.total.toFixed(2)}`,
+      expiryDate: quote.expiryDate,
+      pdfBuffer,
+    });
+  } catch (err) {
+    console.error(`[quotes] failed to send ${quote.number}`, err);
+    const message = err instanceof Error ? err.message : "Failed to send email.";
+    return { ok: false, error: friendlyEmailError(message) };
+  }
 
   const now = new Date().toISOString();
   await db
@@ -218,6 +226,7 @@ export async function sendQuote(quoteId: string) {
 
   revalidatePath(`/quotes/${quoteId}`);
   revalidatePath("/quotes");
+  return { ok: true };
 }
 
 export async function markQuoteResponded(quoteId: string, accepted: boolean) {

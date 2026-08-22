@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -25,10 +25,12 @@ export function QuoteActions({
   alreadyConverted: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+  const [sendError, setSendError] = useState<string | null>(null);
   const router = useRouter();
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div>
+      <div className="flex flex-wrap gap-2">
       <PdfPreviewButton href={`/quotes/${quoteId}/pdf`} filename={`${quoteNumber}.pdf`} label="Preview" />
 
       <Link
@@ -44,7 +46,12 @@ export function QuoteActions({
           title={!hasClientEmail ? "Client has no email on file" : undefined}
           onClick={() =>
             startTransition(async () => {
-              await sendQuote(quoteId);
+              setSendError(null);
+              const result = await sendQuote(quoteId);
+              if (!result.ok) {
+                setSendError(result.error);
+                return;
+              }
               router.refresh();
             })
           }
@@ -108,6 +115,13 @@ export function QuoteActions({
       >
         Delete
       </button>
+      </div>
+
+      {sendError && (
+        <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 max-w-xl">
+          {sendError}
+        </p>
+      )}
     </div>
   );
 }

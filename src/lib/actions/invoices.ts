@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calcTotals, nextInvoiceNumber, type LineItemInput } from "@/lib/invoice-utils";
 import { generateInvoicePdf } from "@/lib/invoice-pdf";
-import { sendInvoiceEmail } from "@/lib/mailer";
+import { sendInvoiceEmail, friendlyEmailError } from "@/lib/mailer";
 import { checkMonthlyDocumentLimit } from "@/lib/plan-access";
 import { addDays, formatISO } from "date-fns";
 
@@ -219,12 +219,14 @@ export async function buildInvoicePdfBuffer(invoiceId: string, businessId: strin
   });
 }
 
-export async function sendInvoice(invoiceId: string) {
+export type SendInvoiceResult = { ok: true } | { ok: false; error: string };
+
+export async function sendInvoice(invoiceId: string): Promise<SendInvoiceResult> {
   const { business } = await requireBusiness();
   const invoice = await loadFullInvoice(invoiceId, business.id);
 
   if (!invoice.client.email) {
-    throw new Error("This client has no email address on file.");
+    return { ok: false, error: "This client has no email address on file." };
   }
 
   const pdfBuffer = await generateInvoicePdf({
@@ -234,14 +236,25 @@ export async function sendInvoice(invoiceId: string) {
     lineItems: invoice.lineItems.sort((a, b) => a.sortOrder - b.sortOrder),
   });
 
-  await sendInvoiceEmail({
-    to: invoice.client.email,
-    businessName: invoice.business.name,
-    invoiceNumber: invoice.number,
-    total: `${invoice.currency} ${invoice.total.toFixed(2)}`,
-    dueDate: invoice.dueDate,
-    pdfBuffer,
-  });
+  try {
+    await sendInvoiceEmail({
+      to: invoice.client.email,
+      businessName: invoice.business.name,
+      invoiceNumber: invoice.number,
+      total: `${invoice.currency} ${invoice.total.toFixed(2)}`,
+      dueDate: invoice.dueDate,
+      pdfBuffer,
+    });
+  } catch (err) {
+    // Server Action errors that reach the client as a thrown Error get
+    // their message stripped by Next.js in production — so a raw throw
+    // here would crash the page and show a generic "Something went wrong"
+    // with no clue why. Return a result instead so the UI can show
+    // something useful (e.g. Resend's sandbox-mode restriction message).
+    console.error(`[invoices] failed to send ${invoice.number}`, err);
+    const message = err instanceof Error ? err.message : "Failed to send email.";
+    return { ok: false, error: friendlyEmailError(message) };
+  }
 
   const now = new Date().toISOString();
   await db
@@ -251,4 +264,6 @@ export async function sendInvoice(invoiceId: string) {
 
   revalidatePath(`/invoices/${invoiceId}`);
   revalidatePath("/invoices");
+  return { ok: true };
 }
+
