@@ -13,6 +13,14 @@ function getTransporter() {
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
+      // Without these, a blocked/unreachable port (e.g. a host that
+      // firewalls outbound 465) hangs the underlying socket for minutes
+      // before nodemailer's own default timeout kicks in — which means a
+      // Server Action calling this just sits there, and the user watches a
+      // "Sending…" button do nothing for that whole time. Fail fast instead.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 10_000,
     });
   } else {
     // No SMTP configured: log emails to console instead of sending (dev fallback).
