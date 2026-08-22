@@ -1,5 +1,54 @@
 import nodemailer from "nodemailer";
 
+// Railway (like several PaaS hosts) blocks outbound SMTP traffic entirely
+// as an anti-spam measure — both port 465 and 587 to smtp.resend.com timed
+// out identically in testing, which is the signature of a blocked port
+// rather than a config mistake. Resend's plain HTTPS API isn't affected by
+// that (it's just a normal web request), so when SMTP_HOST points at
+// Resend we send through that API instead of SMTP. Any other SMTP_HOST
+// still goes through nodemailer/SMTP as before.
+const USE_RESEND_API =
+  !!process.env.SMTP_HOST?.toLowerCase().includes("resend.com") && !!process.env.SMTP_PASS;
+
+type SendArgs = {
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+  attachments?: { filename: string; content: Buffer; contentType?: string }[];
+};
+
+async function sendViaResendApi(args: SendArgs) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SMTP_PASS}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: args.from,
+      to: [args.to],
+      subject: args.subject,
+      text: args.text,
+      reply_to: args.replyTo || undefined,
+      attachments: args.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content.toString("base64"),
+      })),
+    }),
+    // Fail fast rather than hang — this is a plain HTTPS call so it should
+    // normally resolve in well under a second.
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Resend API error ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
 let transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {
@@ -13,11 +62,10 @@ function getTransporter() {
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
-      // Without these, a blocked/unreachable port (e.g. a host that
-      // firewalls outbound 465) hangs the underlying socket for minutes
-      // before nodemailer's own default timeout kicks in — which means a
-      // Server Action calling this just sits there, and the user watches a
-      // "Sending…" button do nothing for that whole time. Fail fast instead.
+      // Without these, a blocked/unreachable port hangs the underlying
+      // socket for minutes before nodemailer's own default timeout kicks
+      // in — which means a Server Action calling this just sits there,
+      // and the user watches a "Sending…" button do nothing. Fail fast.
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 10_000,
@@ -29,6 +77,20 @@ function getTransporter() {
   return transporter;
 }
 
+async function send(args: SendArgs) {
+  if (USE_RESEND_API) return sendViaResendApi(args);
+
+  const t = getTransporter();
+  return t.sendMail({
+    from: args.from,
+    to: args.to,
+    subject: args.subject,
+    text: args.text,
+    replyTo: args.replyTo,
+    attachments: args.attachments,
+  });
+}
+
 export async function sendInvoiceEmail(opts: {
   to: string;
   businessName: string;
@@ -38,8 +100,7 @@ export async function sendInvoiceEmail(opts: {
   pdfBuffer: Buffer;
   message?: string;
 }) {
-  const t = getTransporter();
-  const info = await t.sendMail({
+  const info = await send({
     from: process.env.SMTP_FROM || `"${opts.businessName}" <no-reply@invoicing.local>`,
     to: opts.to,
     subject: `Invoice ${opts.invoiceNumber} from ${opts.businessName}`,
@@ -71,8 +132,7 @@ export async function sendQuoteEmail(opts: {
   pdfBuffer: Buffer;
   message?: string;
 }) {
-  const t = getTransporter();
-  const info = await t.sendMail({
+  const info = await send({
     from: process.env.SMTP_FROM || `"${opts.businessName}" <no-reply@invoicing.local>`,
     to: opts.to,
     subject: `Quote ${opts.quoteNumber} from ${opts.businessName}`,
@@ -112,8 +172,7 @@ export async function sendSupportTicketEmail(opts: {
     return null;
   }
 
-  const t = getTransporter();
-  const info = await t.sendMail({
+  const info = await send({
     from: process.env.SMTP_FROM || `"Invoicely" <no-reply@invoicing.local>`,
     to,
     replyTo: opts.userEmail || undefined,
