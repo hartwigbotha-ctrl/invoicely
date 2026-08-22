@@ -338,10 +338,14 @@ export const subscriptions = sqliteTable("subscriptions", {
   planId: text("plan_id")
     .notNull()
     .references(() => plans.id),
-  status: text("status").notNull().default("trialing"), // trialing|active|past_due|canceled
+  status: text("status").notNull().default("trialing"), // incomplete|trialing|active|past_due|canceled
   provider: text("provider"), // payfast|stripe|null (manual)
   providerCustomerId: text("provider_customer_id"),
-  providerSubscriptionId: text("provider_subscription_id"),
+  providerSubscriptionId: text("provider_subscription_id"), // PayFast recurring "token" (pf_payment_id's associated token) used to cancel/manage
+  // Our own reference sent as m_payment_id on the PayFast checkout that
+  // created this row, so the ITN webhook can find the right subscription
+  // even before the first payment has confirmed and we have a token yet.
+  checkoutReference: text("checkout_reference"),
   trialEndsAt: text("trial_ends_at"),
   currentPeriodStart: text("current_period_start"),
   currentPeriodEnd: text("current_period_end"),
@@ -349,7 +353,7 @@ export const subscriptions = sqliteTable("subscriptions", {
   ...timestamps,
 });
 
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
   business: one(businesses, {
     fields: [subscriptions.businessId],
     references: [businesses.id],
@@ -357,6 +361,34 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
   plan: one(plans, {
     fields: [subscriptions.planId],
     references: [plans.id],
+  }),
+  payments: many(subscriptionPayments),
+}));
+
+// ---------- Subscription billing events (PayFast ITN log) ----------
+// One row per PayFast Instant Transaction Notification we receive for a
+// SaaS subscription payment. This is an audit trail — if a payment is
+// missed or disputed we can see exactly what PayFast told us and when,
+// separate from the `payments` table (which is for a business's own
+// client invoice payments, not their subscription to Invoicely itself).
+export const subscriptionPayments = sqliteTable("subscription_payments", {
+  id: id(),
+  subscriptionId: text("subscription_id")
+    .notNull()
+    .references(() => subscriptions.id, { onDelete: "cascade" }),
+  pfPaymentId: text("pf_payment_id").notNull().unique(), // PayFast's pf_payment_id — dedupes retried ITNs
+  paymentStatus: text("payment_status").notNull(), // COMPLETE|FAILED|CANCELLED (PayFast's payment_status value)
+  amountGross: real("amount_gross").notNull().default(0),
+  rawPayload: text("raw_payload").notNull(), // JSON of the full ITN fields, for debugging/disputes
+  receivedAt: text("received_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export const subscriptionPaymentsRelations = relations(subscriptionPayments, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [subscriptionPayments.subscriptionId],
+    references: [subscriptions.id],
   }),
 }));
 

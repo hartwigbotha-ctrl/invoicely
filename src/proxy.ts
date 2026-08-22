@@ -15,7 +15,8 @@ export default auth(function proxy(req) {
     pathname.startsWith("/imports") ||
     pathname.startsWith("/recurring") ||
     pathname.startsWith("/settings") ||
-    pathname.startsWith("/support");
+    pathname.startsWith("/support") ||
+    pathname.startsWith("/billing");
 
   if (isProtected && !isLoggedIn) {
     const url = new URL("/login", req.nextUrl.origin);
@@ -27,7 +28,13 @@ export default auth(function proxy(req) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // Forward the pathname to the (app) layout so it can tell whether the
+  // current request is already headed to /billing (or /support) — those
+  // stay reachable even when a business has no active subscription, so a
+  // blocked user isn't also locked out of paying or asking for help.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {
@@ -41,6 +48,7 @@ export const config = {
     "/recurring/:path*",
     "/settings/:path*",
     "/support/:path*",
+    "/billing/:path*",
     "/login",
     "/register",
   ],

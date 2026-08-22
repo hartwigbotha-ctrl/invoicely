@@ -3,6 +3,8 @@ import { updateBusinessSettings, setPlanManually } from "@/lib/actions/settings"
 import { db } from "@/db";
 import { subscriptions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import Link from "next/link";
+import { CancelSubscriptionButton } from "./cancel-subscription-button";
 
 export default async function SettingsPage() {
   const { business } = await requireBusiness();
@@ -34,11 +36,18 @@ export default async function SettingsPage() {
               <p className="text-gray-500">
                 {subscription.plan.currency} {subscription.plan.priceMonthly.toFixed(2)} / month
               </p>
+              {subscription.status === "active" && subscription.currentPeriodEnd && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Next billing date: {new Date(subscription.currentPeriodEnd).toLocaleDateString("en-ZA")}
+                </p>
+              )}
             </div>
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
                 subscription.status === "active"
                   ? "bg-green-100 text-green-700"
+                  : subscription.status === "past_due"
+                  ? "bg-amber-100 text-amber-700"
                   : "bg-gray-100 text-gray-600"
               }`}
             >
@@ -49,10 +58,19 @@ export default async function SettingsPage() {
           <p className="text-sm text-gray-500">No active plan yet.</p>
         )}
 
-        {/* Temporary manual plan switch — will be replaced by PayFast checkout. */}
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4">
+          <Link href="/billing/subscribe" className="text-sm font-medium text-gray-900 hover:underline">
+            {subscription?.status === "active" ? "Change plan" : "Choose a plan"}
+          </Link>
+          {subscription?.status === "active" && subscription.providerSubscriptionId && (
+            <CancelSubscriptionButton />
+          )}
+        </div>
+
+        {/* Manual override — kept as an admin/testing fallback now that PayFast checkout is live. */}
         <form action={setPlanManually} className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
           <label htmlFor="planName" className="text-xs text-gray-500">
-            Set plan (manual, until card billing is live):
+            Set plan manually (admin/testing only):
           </label>
           <select
             id="planName"
