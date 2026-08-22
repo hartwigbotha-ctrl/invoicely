@@ -14,7 +14,8 @@ export default auth(function proxy(req) {
     pathname.startsWith("/items") ||
     pathname.startsWith("/imports") ||
     pathname.startsWith("/recurring") ||
-    pathname.startsWith("/settings");
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/support");
 
   if (isProtected && !isLoggedIn) {
     const url = new URL("/login", req.nextUrl.origin);
@@ -39,6 +40,7 @@ export const config = {
     "/imports/:path*",
     "/recurring/:path*",
     "/settings/:path*",
+    "/support/:path*",
     "/login",
     "/register",
   ],

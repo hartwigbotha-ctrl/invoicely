@@ -53,6 +53,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   recurringSchedules: many(recurringSchedules),
   subscriptions: many(subscriptions),
   documentImports: many(documentImports),
+  supportTickets: many(supportTickets),
 }));
 
 // ---------- Users ----------
@@ -394,5 +395,35 @@ export const documentImportsRelations = relations(documentImports, ({ one }) => 
   matchedClient: one(clients, {
     fields: [documentImports.matchedClientId],
     references: [clients.id],
+  }),
+}));
+
+// ---------- Support tickets ("Report a problem") ----------
+// A logged-in Invoicely account holder (a contractor/SMME using the app —
+// not one of their end-invoice-recipients) can report an issue. It's
+// emailed straight to the Invoicely operator; the row here is just a
+// record of what was sent and when, so nothing is lost if the email
+// bounces or gets missed.
+export const supportTickets = sqliteTable("support_tickets", {
+  id: id(),
+  businessId: text("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  message: text("message").notNull(),
+  pageUrl: text("page_url"),
+  status: text("status").notNull().default("open"), // open | resolved
+  emailedOk: integer("emailed_ok", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+});
+
+export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
+  business: one(businesses, {
+    fields: [supportTickets.businessId],
+    references: [businesses.id],
+  }),
+  user: one(users, {
+    fields: [supportTickets.userId],
+    references: [users.id],
   }),
 }));

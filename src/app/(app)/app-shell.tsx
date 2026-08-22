@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   UploadCloud,
+  CircleHelp,
 } from "lucide-react";
 
 const navItems = [
@@ -79,8 +80,19 @@ export function AppShell({
           );
         })}
       </nav>
-      <div className="px-3 py-4 border-t border-gray-200">
-        <p className="px-3 text-xs text-gray-500 truncate mb-2">{userEmail}</p>
+      <div className="px-3 py-4 border-t border-gray-200 space-y-1">
+        <Link
+          href="/support"
+          prefetch={false}
+          onClick={() => setMobileOpen(false)}
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm ${
+            pathname === "/support" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          <CircleHelp size={16} />
+          Report a problem
+        </Link>
+        <p className="px-3 text-xs text-gray-500 truncate mb-2 pt-2">{userEmail}</p>
         <form action={signOutAction}>
           <button
             type="submit"

@@ -86,3 +86,45 @@ export async function sendQuoteEmail(opts: {
 
   return info;
 }
+
+// "Report a problem" notification, sent to the Invoicely operator (not a
+// client of one of our businesses). Set SUPPORT_NOTIFY_EMAIL on Railway to
+// where these should land; falls back to SMTP_FROM's address if unset.
+export async function sendSupportTicketEmail(opts: {
+  businessName: string;
+  businessEmail: string;
+  userEmail?: string | null;
+  message: string;
+  pageUrl?: string | null;
+  ticketId: string;
+}) {
+  const to = process.env.SUPPORT_NOTIFY_EMAIL || process.env.SMTP_FROM;
+  if (!to) {
+    console.log(`[mailer] No SUPPORT_NOTIFY_EMAIL/SMTP_FROM configured — support ticket ${opts.ticketId} logged only.`);
+    return null;
+  }
+
+  const t = getTransporter();
+  const info = await t.sendMail({
+    from: process.env.SMTP_FROM || `"Invoicely" <no-reply@invoicing.local>`,
+    to,
+    replyTo: opts.userEmail || undefined,
+    subject: `[Invoicely support] ${opts.businessName}`,
+    text: [
+      `Business: ${opts.businessName} (${opts.businessEmail})`,
+      opts.userEmail ? `Reported by: ${opts.userEmail}` : null,
+      opts.pageUrl ? `Page: ${opts.pageUrl}` : null,
+      `Ticket ID: ${opts.ticketId}`,
+      "",
+      opts.message,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+
+  if (!process.env.SMTP_HOST) {
+    console.log(`[mailer] SMTP not configured — support ticket ${opts.ticketId} logged only.`);
+  }
+
+  return info;
+}
