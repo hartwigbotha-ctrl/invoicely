@@ -48,15 +48,27 @@ function pfEncode(value: string): string {
   return encodeURIComponent(value).replace(/%20/g, "+");
 }
 
-/** Builds the exact PayFast signature string PayFast expects: fields in
- * insertion order, "&"-joined, passphrase appended last if set. */
-function buildSignatureBase(fields: Record<string, string>): string {
+/** Encodes fields into a PayFast-style "key=value&key=value" string, in
+ * insertion order, using pfEncode — the same encoder used everywhere else
+ * PayFast field values get put on the wire (query string or signature
+ * base), so nothing can silently disagree with itself. Never includes the
+ * passphrase — that's only ever mixed into the signature hash, never sent
+ * as an actual field. */
+function encodeFields(fields: Record<string, string>): string {
   const parts: string[] = [];
   for (const [key, value] of Object.entries(fields)) {
     if (value === undefined || value === null || value === "") continue;
     parts.push(`${key}=${pfEncode(String(value))}`);
   }
-  let base = parts.join("&");
+  return parts.join("&");
+}
+
+/** Builds the exact string PayFast expects to hash: encoded fields in
+ * insertion order, with the passphrase appended last if one is set. This
+ * is ONLY for computing/verifying the signature — never send this string
+ * itself as the request body/query, since it would leak the passphrase. */
+function buildSignatureBase(fields: Record<string, string>): string {
+  let base = encodeFields(fields);
   const passphrase = getPassphrase();
   if (passphrase) {
     base += `&passphrase=${pfEncode(passphrase)}`;
@@ -107,7 +119,14 @@ export function buildSubscribeUrl(args: SubscribeCheckoutArgs): string {
   };
 
   const signature = signFields(fields);
-  const query = new URLSearchParams({ ...fields, signature }).toString();
+  // Build the query string with the same pfEncode used for the signature —
+  // NOT URLSearchParams's built-in serializer, which encodes some
+  // characters (e.g. ! ' ( ) *) differently than PHP's urlencode()/
+  // PayFast's scheme. That encoder mismatch is exactly what caused a real
+  // "signature does not match" error from PayFast in testing, even though
+  // the signature math itself was correct. encodeFields() never includes
+  // the passphrase itself (only buildSignatureBase does, for hashing).
+  const query = encodeFields(fields) + `&signature=${signature}`;
   const base = isSandbox() ? "https://sandbox.payfast.co.za/eng/process" : "https://www.payfast.co.za/eng/process";
   return `${base}?${query}`;
 }
