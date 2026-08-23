@@ -140,11 +140,27 @@ export function buildSubscribeUrl(args: SubscribeCheckoutArgs): string {
 
 /** Verifies an incoming ITN's signature against our own recomputed one.
  * PayFast sends `signature` as the last field; every other field
- * (in the order PayFast sent them) is used to recompute it. */
+ * (in the order PayFast sent them) is used to recompute it.
+ *
+ * Unlike the outbound checkout signature (encodeFields, which correctly
+ * omits blank fields we're not sending at all), an ITN payload from
+ * PayFast typically DOES include a number of blank fields (custom_str3,
+ * custom_int1, name_first, etc.) — and PayFast's own signature is computed
+ * over the request exactly as sent, blanks included. Dropping them before
+ * rehashing here produces a different string than PayFast hashed, which is
+ * exactly what caused every real ITN to fail with "signature mismatch"
+ * even after the checkout-side passphrase fix. So this path encodes every
+ * field PayFast actually sent — even ones with an empty value — and only
+ * appends the passphrase (never sent by PayFast, only used for hashing). */
 export function verifyItnSignature(fields: Record<string, string>): boolean {
   const { signature, ...rest } = fields;
   if (!signature) return false;
-  return signFields(rest) === signature;
+  let base = Object.entries(rest)
+    .map(([key, value]) => `${key}=${pfEncode(String(value ?? ""))}`)
+    .join("&");
+  const passphrase = getPassphrase();
+  if (passphrase) base += `&passphrase=${pfEncode(passphrase)}`;
+  return crypto.createHash("md5").update(base).digest("hex") === signature;
 }
 
 /** Server-to-server postback validation, as PayFast's ITN guide requires:
