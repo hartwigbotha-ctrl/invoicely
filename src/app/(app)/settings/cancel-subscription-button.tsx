@@ -15,7 +15,7 @@ export function CancelSubscriptionButton() {
         type="button"
         disabled={pending}
         onClick={() => {
-          if (!confirm("Cancel your Invoicely subscription? You'll lose access once the current billing period ends.")) {
+          if (!confirm("Cancel your Voxbil subscription? You'll lose access once the current billing period ends.")) {
             return;
           }
           startTransition(async () => {

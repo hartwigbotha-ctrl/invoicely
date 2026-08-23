@@ -48,7 +48,7 @@ export function AppShell({
       <div className="px-5 py-5 border-b border-gray-200 flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-lg font-bold" onClick={() => setMobileOpen(false)}>
-            Invoicely
+            Voxbil
           </Link>
           <p className="text-xs text-gray-500 mt-0.5 truncate">{businessName}</p>
         </div>
@@ -122,7 +122,7 @@ export function AppShell({
         >
           <Menu size={22} />
         </button>
-        <span className="font-bold">Invoicely</span>
+        <span className="font-bold">Voxbil</span>
       </div>
 
       {/* Mobile off-canvas drawer */}

@@ -1,6 +1,6 @@
-# Invoicely
+# Voxbil
 
-A simple invoicing web app for SMMEs and contractors — create clients, send
+A simple invoicing web app for small businesses and contractors — create clients, send
 professional PDF invoices, track paid/overdue status, and set up recurring
 invoices that generate (and email) themselves automatically. Built as an
 alternative to spreadsheets and to apps like Invoice2Go, tailored so it can
@@ -56,7 +56,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=...
 SMTP_PASS=...
-SMTP_FROM="Invoicely <no-reply@yourdomain.com>"
+SMTP_FROM="Voxbil <no-reply@yourdomain.com>"
 ```
 
 Any standard SMTP provider works (SendGrid, Mailgun, Resend's SMTP endpoint,

@@ -8,7 +8,7 @@ import { addMonths } from "date-fns";
 // PayFast's Instant Transaction Notification (ITN) — a server-to-server
 // POST PayFast sends whenever a subscription payment succeeds, fails, or a
 // subscription is cancelled. This is what actually activates/deactivates a
-// business's Invoicely subscription; the browser return_url the customer
+// business's Voxbil subscription; the browser return_url the customer
 // sees after checkout (/billing/success) is just UI, never trusted for
 // activation, since a user can hit "back" or close the tab before it loads.
 export async function POST(req: NextRequest) {

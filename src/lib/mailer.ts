@@ -7,7 +7,7 @@ import nodemailer from "nodemailer";
 // Server Action error messages get stripped by Next.js in production).
 export function friendlyEmailError(raw: string): string {
   if (raw.includes("verify a domain")) {
-    return "Emails can currently only be sent to your own account email while email sending is in test mode. Ask your Invoicely admin to verify a sending domain to email real clients.";
+    return "Emails can currently only be sent to your own account email while email sending is in test mode. Ask your Voxbil admin to verify a sending domain to email real clients.";
   }
   return "Couldn't send the email. Please try again, or let us know if this keeps happening.";
 }
@@ -167,7 +167,7 @@ export async function sendQuoteEmail(opts: {
   return info;
 }
 
-// "Report a problem" notification, sent to the Invoicely operator (not a
+// "Report a problem" notification, sent to the Voxbil operator (not a
 // client of one of our businesses). Set SUPPORT_NOTIFY_EMAIL on Railway to
 // where these should land; falls back to SMTP_FROM's address if unset.
 export async function sendSupportTicketEmail(opts: {
@@ -185,10 +185,10 @@ export async function sendSupportTicketEmail(opts: {
   }
 
   const info = await send({
-    from: process.env.SMTP_FROM || `"Invoicely" <no-reply@invoicing.local>`,
+    from: process.env.SMTP_FROM || `"Voxbil" <no-reply@invoicing.local>`,
     to,
     replyTo: opts.userEmail || undefined,
-    subject: `[Invoicely support] ${opts.businessName}`,
+    subject: `[Voxbil support] ${opts.businessName}`,
     text: [
       `Business: ${opts.businessName} (${opts.businessEmail})`,
       opts.userEmail ? `Reported by: ${opts.userEmail}` : null,

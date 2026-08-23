@@ -13,12 +13,12 @@ import { InstallButton } from "./install-button";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Invoicely — Simple Invoicing for Contractors & SMMEs",
+  title: "Voxbil — Simple Invoicing for Contractors & Small Businesses",
   description: "Create, send, and auto-generate invoices for your small business.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Invoicely",
+    title: "Voxbil",
   },
   icons: {
     icon: [

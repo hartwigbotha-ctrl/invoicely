@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Invoicely",
-    short_name: "Invoicely",
+    name: "Voxbil",
+    short_name: "Voxbil",
     description: "Simple invoicing for contractors and small businesses.",
     start_url: "/dashboard",
     display: "standalone",
