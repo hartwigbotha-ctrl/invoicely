@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-// PayFast integration for Voxbil's OWN subscription billing (what
+// PayFast integration for Nimblo's OWN subscription billing (what
 // contractors pay us each month) — not to be confused with anything a
 // business might one day want for collecting payment on their client
 // invoices, which is a separate, unrelated feature.
@@ -114,8 +114,8 @@ export function buildSubscribeUrl(args: SubscribeCheckoutArgs): string {
     email_address: args.businessEmail,
     m_payment_id: args.checkoutReference,
     amount,
-    item_name: `Voxbil ${args.planName} plan`,
-    item_description: `Monthly Voxbil subscription — ${args.planName} plan`,
+    item_name: `Nimblo ${args.planName} plan`,
+    item_description: `Monthly Nimblo subscription — ${args.planName} plan`,
     custom_str1: args.businessId,
     custom_str2: args.planName,
     subscription_type: "1",

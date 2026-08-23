@@ -26,7 +26,7 @@ export default async function SubscribePage() {
         </h1>
         <p className="text-sm text-gray-600 mt-1">
           {blocked
-            ? "Voxbil needs an active subscription before you can create invoices and quotes. Pick a plan below to continue — you'll be sent to PayFast to complete payment securely."
+            ? "Nimblo needs an active subscription before you can create invoices and quotes. Pick a plan below to continue — you'll be sent to PayFast to complete payment securely."
             : "Pick a different plan below. Your current plan stays active until the new one is confirmed."}
         </p>
       </div>

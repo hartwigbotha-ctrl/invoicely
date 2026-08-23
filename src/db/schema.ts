@@ -370,7 +370,7 @@ export const subscriptionsRelations = relations(subscriptions, ({ one, many }) =
 // SaaS subscription payment. This is an audit trail — if a payment is
 // missed or disputed we can see exactly what PayFast told us and when,
 // separate from the `payments` table (which is for a business's own
-// client invoice payments, not their subscription to Voxbil itself).
+// client invoice payments, not their subscription to Nimblo itself).
 export const subscriptionPayments = sqliteTable("subscription_payments", {
   id: id(),
   subscriptionId: text("subscription_id")
@@ -431,9 +431,9 @@ export const documentImportsRelations = relations(documentImports, ({ one }) => 
 }));
 
 // ---------- Support tickets ("Report a problem") ----------
-// A logged-in Voxbil account holder (a contractor/small business using the app —
+// A logged-in Nimblo account holder (a contractor/small business using the app —
 // not one of their end-invoice-recipients) can report an issue. It's
-// emailed straight to the Voxbil operator; the row here is just a
+// emailed straight to the Nimblo operator; the row here is just a
 // record of what was sent and when, so nothing is lost if the email
 // bounces or gets missed.
 export const supportTickets = sqliteTable("support_tickets", {

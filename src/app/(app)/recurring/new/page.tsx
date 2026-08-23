@@ -38,7 +38,7 @@ export default async function NewSchedulePage() {
     <div className="p-4 sm:p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">New recurring schedule</h1>
       <p className="text-sm text-gray-600 mb-8">
-        Voxbil will automatically generate (and optionally email) an invoice each time this schedule is due.
+        Nimblo will automatically generate (and optionally email) an invoice each time this schedule is due.
       </p>
       <form action={createRecurringSchedule} className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
         <div className="grid sm:grid-cols-2 gap-4">

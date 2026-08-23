@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download, X, Share } from "lucide-react";
 
-const DISMISSED_KEY = "voxbil-install-dismissed";
+const DISMISSED_KEY = "nimblo-install-dismissed";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -110,7 +110,7 @@ export function InstallButton() {
             className="bg-white w-full sm:max-w-sm sm:rounded-lg rounded-t-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold mb-3">Add Voxbil to your Home Screen</h2>
+            <h2 className="text-lg font-semibold mb-3">Add Nimblo to your Home Screen</h2>
             <ol className="space-y-3 text-sm text-gray-700">
               <li className="flex items-start gap-2">
                 <span className="shrink-0 w-5 h-5 rounded-full bg-gray-900 text-white text-xs flex items-center justify-center">

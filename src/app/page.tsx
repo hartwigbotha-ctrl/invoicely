@@ -23,7 +23,7 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
             <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-600 to-fuchsia-500" />
-            Voxbil
+            Nimblo
           </span>
           <nav className="flex items-center gap-6 text-sm">
             <a href="#features" className="hidden sm:inline text-gray-600 hover:text-gray-900">
@@ -59,7 +59,7 @@ export default async function LandingPage() {
             Stop invoicing in spreadsheets.
           </h1>
           <p className="mt-6 text-lg text-indigo-100 max-w-2xl mx-auto">
-            Voxbil helps contractors and small businesses create professional
+            Nimblo helps contractors and small businesses create professional
             invoices, chase payments, and auto-generate recurring invoices —
             without the copy-paste errors.
           </p>
@@ -114,13 +114,13 @@ export default async function LandingPage() {
             icon={UploadCloud}
             color="blue"
             title="Import your old records"
-            body="Upload old Excel sheets, Word docs or scanned invoices and Voxbil reads them automatically — clients, items and totals detected, editable before import."
+            body="Upload old Excel sheets, Word docs or scanned invoices and Nimblo reads them automatically — clients, items and totals detected, editable before import."
           />
           <Feature
             icon={Smartphone}
             color="emerald"
             title="Works on your phone"
-            body="Add Voxbil to your home screen and invoice clients from a building site as easily as from a desk."
+            body="Add Nimblo to your home screen and invoice clients from a building site as easily as from a desk."
           />
           <Feature
             icon={Palette}
@@ -162,7 +162,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="border-t border-gray-100 py-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Voxbil
+        © {new Date().getFullYear()} Nimblo
       </footer>
     </main>
   );

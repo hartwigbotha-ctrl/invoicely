@@ -1,4 +1,4 @@
-# Voxbil
+# Nimblo
 
 A simple invoicing web app for small businesses and contractors — create clients, send
 professional PDF invoices, track paid/overdue status, and set up recurring
@@ -56,7 +56,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=...
 SMTP_PASS=...
-SMTP_FROM="Voxbil <no-reply@yourdomain.com>"
+SMTP_FROM="Nimblo <no-reply@yourdomain.com>"
 ```
 
 Any standard SMTP provider works (SendGrid, Mailgun, Resend's SMTP endpoint,

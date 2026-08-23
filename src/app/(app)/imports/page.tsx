@@ -19,7 +19,7 @@ export default async function ImportsPage() {
           <Lock size={28} className="mx-auto text-gray-400 mb-4" />
           <h1 className="text-xl font-bold mb-2">Import old invoices &amp; quotes</h1>
           <p className="text-gray-600 mb-6">
-            Upload your old Excel sheets, Word docs, PDFs or scanned invoices and Voxbil will
+            Upload your old Excel sheets, Word docs, PDFs or scanned invoices and Nimblo will
             automatically read them, detect clients and items, and convert them into proper
             invoices/quotes — no retyping. This is a Pro/Business feature.
           </p>
@@ -45,7 +45,7 @@ export default async function ImportsPage() {
       <div>
         <h1 className="text-2xl font-bold">Import old invoices &amp; quotes</h1>
         <p className="text-sm text-gray-600 mt-1">
-          Upload your old paperwork — Voxbil detects the client, items and totals
+          Upload your old paperwork — Nimblo detects the client, items and totals
           automatically. Review and edit before anything is created.
         </p>
       </div>

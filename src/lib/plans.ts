@@ -1,4 +1,4 @@
-// Single source of truth for Voxbil's own subscription plans (what
+// Single source of truth for Nimblo's own subscription plans (what
 // contractors pay YOU to use the app — separate from the invoices they
 // send their own clients). Update prices/features here; the DB row for
 // each plan is kept in sync automatically on every server start
