@@ -202,9 +202,15 @@ function buildApiHeaders(): Record<string, string> {
     version: "v1",
     timestamp,
   };
+  // Unlike the checkout/ITN scheme (a real query string, so values must be
+  // URL-encoded), PayFast's REST API signs these headers as a plain
+  // key=value string with the raw values — not URL-encoded. Running them
+  // through pfEncode mangled the timestamp's ":" and "+" into "%3A"/"%2B",
+  // which doesn't match what PayFast hashes on their end, and is exactly
+  // what produced the "Merchant authorization failed" 401 on cancellation.
   const sortedKeys = Object.keys(headerFields).sort();
-  let base = sortedKeys.map((k) => `${k}=${pfEncode(headerFields[k])}`).join("&");
-  if (passphrase) base += `&passphrase=${pfEncode(passphrase)}`;
+  let base = sortedKeys.map((k) => `${k}=${headerFields[k]}`).join("&");
+  if (passphrase) base += `&passphrase=${passphrase}`;
   const signature = crypto.createHash("md5").update(base).digest("hex");
 
   return { ...headerFields, signature };
