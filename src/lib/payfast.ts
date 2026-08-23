@@ -197,20 +197,26 @@ function buildApiHeaders(): Record<string, string> {
   const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00");
   const passphrase = getPassphrase();
 
+  // Per PayFast's own API docs (developers.payfast.co.za/api#authentication):
+  // "Sort all the submitted variables (header, body, query string
+  // parameters and passphrase) in alphabetical order" — the passphrase is
+  // inserted into the SAME object and sorted into its own alphabetical
+  // position, not appended after the rest like a previous version of this
+  // function did (which put it after "version" instead of between
+  // "merchant-id" and "timestamp" — exactly what caused every cancellation
+  // to fail with a 401 "Merchant authorisation failed", since PayFast
+  // computes its expected hash over the correctly-sorted string). Each
+  // value IS urlencoded per the docs' own example
+  // ("merchant-id=10000100&passphrase=...&version=v1").
   const headerFields: Record<string, string> = {
     "merchant-id": merchantId,
     version: "v1",
     timestamp,
   };
-  // Unlike the checkout/ITN scheme (a real query string, so values must be
-  // URL-encoded), PayFast's REST API signs these headers as a plain
-  // key=value string with the raw values — not URL-encoded. Running them
-  // through pfEncode mangled the timestamp's ":" and "+" into "%3A"/"%2B",
-  // which doesn't match what PayFast hashes on their end, and is exactly
-  // what produced the "Merchant authorization failed" 401 on cancellation.
-  const sortedKeys = Object.keys(headerFields).sort();
-  let base = sortedKeys.map((k) => `${k}=${headerFields[k]}`).join("&");
-  if (passphrase) base += `&passphrase=${passphrase}`;
+  const allFields: Record<string, string> = { ...headerFields };
+  if (passphrase) allFields.passphrase = passphrase;
+  const sortedKeys = Object.keys(allFields).sort();
+  const base = sortedKeys.map((k) => `${k}=${pfEncode(allFields[k])}`).join("&");
   const signature = crypto.createHash("md5").update(base).digest("hex");
 
   return { ...headerFields, signature };
