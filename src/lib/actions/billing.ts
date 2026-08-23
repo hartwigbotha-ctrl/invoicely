@@ -62,10 +62,22 @@ export async function startSubscriptionCheckout(formData: FormData) {
 
 export type CancelSubscriptionResult = { ok: true } | { ok: false; error: string };
 
-/** Cancels the business's active PayFast recurring subscription. The
- * subscription row itself is only marked "canceled" once PayFast confirms
- * via ITN (payment_status=CANCELLED) — we don't flip it locally here, so
- * the source of truth always matches what PayFast is actually billing. */
+/** Cancels the business's active PayFast recurring subscription.
+ *
+ * Originally this only marked the row "canceled" once PayFast confirmed via
+ * an ITN (payment_status=CANCELLED), on the theory that the ITN is always
+ * the more trustworthy source. That reasoning holds for activation (an
+ * unauthenticated incoming request claiming "payment succeeded" needs that
+ * extra verification), but it doesn't apply here: a successful response
+ * from cancelPayfastSubscription() IS PayFast directly, synchronously,
+ * authenticating our own signed request and confirming the cancellation —
+ * there's nothing left to double-check. Waiting on the ITN anyway left
+ * cancellations stuck showing "active" whenever that follow-up webhook's
+ * postback validation had a hiccup, even though PayFast had already
+ * cancelled the subscription. So we flip the status here, synchronously,
+ * the moment PayFast's API confirms it. The ITN handler still does the
+ * same update if a CANCELLED notification does arrive later — harmless,
+ * since it's the same status either way. */
 export async function cancelSubscription(): Promise<CancelSubscriptionResult> {
   const { business } = await requireBusiness();
 
@@ -85,6 +97,11 @@ export async function cancelSubscription(): Promise<CancelSubscriptionResult> {
       error: "Couldn't cancel with PayFast right now. Please try again, or cancel directly from your PayFast account.",
     };
   }
+
+  await db
+    .update(subscriptions)
+    .set({ status: "canceled", canceledAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    .where(eq(subscriptions.id, subscription.id));
 
   revalidatePath("/settings");
   return { ok: true };
