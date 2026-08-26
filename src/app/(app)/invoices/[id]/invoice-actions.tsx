@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { sendInvoice, deleteInvoice, markInvoicePaid } from "@/lib/actions/invoices";
 import { PdfPreviewButton } from "../../pdf-preview-button";
 
@@ -43,8 +44,14 @@ export function InvoiceActions({
                 const result = await sendInvoice(invoiceId);
                 if (!result.ok) {
                   setSendError(result.error);
+                  toast.error(result.error || "Couldn't send the invoice.");
                   return;
                 }
+                toast.success(
+                  status === "draft"
+                    ? `Invoice ${invoiceNumber} sent`
+                    : `Invoice ${invoiceNumber} resent`
+                );
                 router.refresh();
               })
             }
@@ -60,6 +67,7 @@ export function InvoiceActions({
             onClick={() =>
               startTransition(async () => {
                 await markInvoicePaid(invoiceId);
+                toast.success(`Invoice ${invoiceNumber} marked as paid`);
                 router.refresh();
               })
             }
@@ -73,6 +81,7 @@ export function InvoiceActions({
           disabled={pending}
           onClick={() => {
             if (confirm("Delete this invoice? This cannot be undone.")) {
+              toast.success(`Invoice ${invoiceNumber} deleted`);
               startTransition(() => deleteInvoice(invoiceId));
             }
           }}

@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { deleteQuote } from "@/lib/actions/quotes";
 import { PdfPreviewButton } from "../pdf-preview-button";
 
@@ -35,6 +36,7 @@ export function QuoteRowActions({
         disabled={pending}
         onClick={() => {
           if (confirm(`Delete quote ${quoteNumber}? This cannot be undone.`)) {
+            toast.success(`Quote ${quoteNumber} deleted`);
             startTransition(async () => {
               await deleteQuote(quoteId);
               router.refresh();

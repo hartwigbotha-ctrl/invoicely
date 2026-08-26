@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { toggleScheduleActive, deleteSchedule, runScheduleNow } from "@/lib/actions/recurring";
 
 export function ScheduleActions({ scheduleId, active }: { scheduleId: string; active: boolean }) {
@@ -15,6 +16,7 @@ export function ScheduleActions({ scheduleId, active }: { scheduleId: string; ac
         onClick={() =>
           startTransition(async () => {
             await runScheduleNow(scheduleId);
+            toast.success("Invoice generated from schedule");
             router.refresh();
           })
         }
@@ -27,6 +29,7 @@ export function ScheduleActions({ scheduleId, active }: { scheduleId: string; ac
         onClick={() =>
           startTransition(async () => {
             await toggleScheduleActive(scheduleId, !active);
+            toast.success(active ? "Schedule paused" : "Schedule resumed");
             router.refresh();
           })
         }
@@ -38,6 +41,7 @@ export function ScheduleActions({ scheduleId, active }: { scheduleId: string; ac
         disabled={pending}
         onClick={() => {
           if (confirm("Delete this schedule?")) {
+            toast.success("Schedule deleted");
             startTransition(() => deleteSchedule(scheduleId));
           }
         }}

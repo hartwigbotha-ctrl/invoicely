@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { cancelSubscription } from "@/lib/actions/billing";
 
 export function CancelSubscriptionButton() {
@@ -23,8 +24,10 @@ export function CancelSubscriptionButton() {
             const result = await cancelSubscription();
             if (!result.ok) {
               setError(result.error);
+              toast.error(result.error || "Couldn't cancel your subscription.");
               return;
             }
+            toast.success("Subscription cancelled");
             router.refresh();
           });
         }}

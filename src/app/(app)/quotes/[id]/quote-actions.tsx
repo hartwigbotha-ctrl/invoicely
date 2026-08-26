@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   sendQuote,
   deleteQuote,
@@ -50,8 +51,12 @@ export function QuoteActions({
               const result = await sendQuote(quoteId);
               if (!result.ok) {
                 setSendError(result.error);
+                toast.error(result.error || "Couldn't send the quote.");
                 return;
               }
+              toast.success(
+                status === "draft" ? `Quote ${quoteNumber} sent` : `Quote ${quoteNumber} resent`
+              );
               router.refresh();
             })
           }
@@ -68,6 +73,7 @@ export function QuoteActions({
             onClick={() =>
               startTransition(async () => {
                 await markQuoteResponded(quoteId, true);
+                toast.success(`Quote ${quoteNumber} marked accepted`);
                 router.refresh();
               })
             }
@@ -80,6 +86,7 @@ export function QuoteActions({
             onClick={() =>
               startTransition(async () => {
                 await markQuoteResponded(quoteId, false);
+                toast.success(`Quote ${quoteNumber} marked declined`);
                 router.refresh();
               })
             }
@@ -95,6 +102,7 @@ export function QuoteActions({
           disabled={pending}
           onClick={() => {
             if (confirm(`Create a draft invoice from ${quoteNumber}?`)) {
+              toast.success(`Draft invoice created from ${quoteNumber}`);
               startTransition(() => convertQuoteToInvoice(quoteId));
             }
           }}
@@ -108,6 +116,7 @@ export function QuoteActions({
         disabled={pending}
         onClick={() => {
           if (confirm("Delete this quote? This cannot be undone.")) {
+            toast.success(`Quote ${quoteNumber} deleted`);
             startTransition(() => deleteQuote(quoteId));
           }
         }}

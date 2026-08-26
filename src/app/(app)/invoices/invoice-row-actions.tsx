@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { deleteInvoice } from "@/lib/actions/invoices";
 import { PdfPreviewButton } from "../pdf-preview-button";
 
@@ -35,6 +36,7 @@ export function InvoiceRowActions({
         disabled={pending}
         onClick={() => {
           if (confirm(`Delete invoice ${invoiceNumber}? This cannot be undone.`)) {
+            toast.success(`Invoice ${invoiceNumber} deleted`);
             startTransition(async () => {
               await deleteInvoice(invoiceId);
               router.refresh();

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { RegisterServiceWorker } from "./register-sw";
 import { InstallButton } from "./install-button";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
         {children}
+        <Toaster richColors position="top-center" />
         <RegisterServiceWorker />
         <InstallButton />
       </body>
