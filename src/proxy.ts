@@ -24,7 +24,8 @@ export default auth(async function proxy(req) {
     pathname.startsWith("/recurring") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/support") ||
-    pathname.startsWith("/billing");
+    pathname.startsWith("/billing") ||
+    pathname.startsWith("/admin");
 
   if (isProtected && !isLoggedIn) {
     const url = new URL("/login", req.nextUrl.origin);
@@ -37,6 +38,11 @@ export default auth(async function proxy(req) {
   }
 
   const isBillingExempt = BILLING_EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
+  // /admin is its own thing: it's exempt from the subscription paywall (an
+  // admin's own test business may not have an active subscription) but is
+  // NOT exempt from requiring login above, and does its own email-based
+  // authorization inside the page itself (src/app/(app)/admin/page.tsx).
+  const isAdminPath = pathname.startsWith("/admin");
 
   // No trial, no access without an active subscription — enforced HERE, at
   // the network boundary, not only in the (app) layout server component.
@@ -53,7 +59,7 @@ export default auth(async function proxy(req) {
   // Node.js runtime for every matched request (including the RSC fetch
   // behind a client-side navigation), so it can't be skipped that way. The
   // (app) layout keeps its own copy of this check too, as defense in depth.
-  if (isLoggedIn && isProtected && !isAuthPage && !isBillingExempt) {
+  if (isLoggedIn && isProtected && !isAuthPage && !isBillingExempt && !isAdminPath) {
     const businessId = (req.auth?.user as { businessId?: string } | undefined)?.businessId;
     if (businessId) {
       const subscription = await db.query.subscriptions.findFirst({
@@ -88,6 +94,7 @@ export const config = {
     "/settings/:path*",
     "/support/:path*",
     "/billing/:path*",
+    "/admin/:path*",
     "/login",
     "/register",
   ],

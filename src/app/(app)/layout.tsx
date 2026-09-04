@@ -44,8 +44,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await signOut({ redirectTo: "/login" });
   }
 
+  // Same email-allowlist check as src/app/(app)/admin/page.tsx — only used
+  // here to decide whether to show the "Admin" nav link at all; the admin
+  // page re-checks this itself, so this is just UX (no security relies on
+  // this list not showing the link).
+  const adminEmails = (process.env.ADMIN_EMAIL || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isAdmin = adminEmails.includes((session.user?.email ?? "").toLowerCase());
+
   return (
-    <AppShell businessName={business.name} userEmail={session.user?.email} signOutAction={signOutAction}>
+    <AppShell
+      businessName={business.name}
+      userEmail={session.user?.email}
+      signOutAction={signOutAction}
+      isAdmin={isAdmin}
+    >
       {children}
     </AppShell>
   );

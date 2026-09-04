@@ -15,6 +15,7 @@ import {
   X,
   UploadCloud,
   CircleHelp,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -32,12 +33,14 @@ export function AppShell({
   businessName,
   userEmail,
   signOutAction,
+  isAdmin,
   children,
 }: {
   businessName: string;
   userEmail?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signOutAction: any;
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,6 +84,19 @@ export function AppShell({
         })}
       </nav>
       <div className="px-3 py-4 border-t border-gray-200 space-y-1">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            prefetch={false}
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm ${
+              pathname === "/admin" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <ShieldCheck size={16} />
+            Admin
+          </Link>
+        )}
         <Link
           href="/support"
           prefetch={false}
