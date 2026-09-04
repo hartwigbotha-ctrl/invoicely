@@ -67,7 +67,10 @@ export default async function SettingsPage() {
           )}
         </div>
 
-        {/* Manual override — kept as an admin/testing fallback now that PayFast checkout is live. */}
+        {/* Manual override — admin/testing fallback only; the action itself
+            also refuses to run in production (see setPlanManually), this
+            just keeps the control from being shown to real customers. */}
+        {process.env.NODE_ENV !== "production" && (
         <form action={setPlanManually} className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
           <label htmlFor="planName" className="text-xs text-gray-500">
             Set plan manually (admin/testing only):
@@ -91,6 +94,7 @@ export default async function SettingsPage() {
             Update
           </button>
         </form>
+        )}
       </div>
 
       <form

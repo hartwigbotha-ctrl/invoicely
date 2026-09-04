@@ -66,13 +66,19 @@ export async function updateBusinessSettings(formData: FormData) {
 }
 
 /**
- * TEMPORARY: manual plan switch used until real billing (PayFast) is wired
- * up. Lets the account owner set their own plan directly so Pro/Business
- * features can be used and demoed before card payments are live. Once
- * PayFast webhooks are in, subscription rows will be updated automatically
- * from payment events instead and this action can be removed or restricted.
+ * Manual plan switch — admin/testing fallback ONLY, from before PayFast was
+ * wired up. Real billing is live now (see build notes), so this can no
+ * longer be reachable in production: it would let any logged-in business
+ * grant themselves an "active" subscription without ever paying, which is
+ * exactly the "you can access the whole app without subscribing" bug
+ * Hartwig flagged. Restricted to non-production so it still works for local
+ * testing/demoing Pro/Business features.
  */
 export async function setPlanManually(formData: FormData) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Manual plan switching is disabled in production. Subscribe via PayFast instead.");
+  }
+
   const { business } = await requireBusiness();
   const planName = formData.get("planName") as string;
 
