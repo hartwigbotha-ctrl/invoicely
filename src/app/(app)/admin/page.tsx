@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { businesses, subscriptions } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { isAdminEmail } from "@/lib/admin";
+import { DeleteBusinessButton } from "./delete-business-button";
 
 /**
  * Admin-only, cross-tenant view — restricted by email (ADMIN_EMAIL env var,
@@ -20,13 +22,7 @@ import { desc } from "drizzle-orm";
 export default async function AdminPage() {
   const { session } = await requireBusiness();
 
-  const adminEmails = (process.env.ADMIN_EMAIL || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const userEmail = session.user?.email?.toLowerCase() ?? "";
-
-  if (adminEmails.length === 0 || !adminEmails.includes(userEmail)) {
+  if (!isAdminEmail(session.user?.email)) {
     redirect("/dashboard");
   }
 
@@ -54,6 +50,7 @@ export default async function AdminPage() {
       planName: subscription?.plan?.name ?? null,
       status: subscription?.status ?? "no subscription",
       flagged,
+      isActive: subscription?.status === "active",
     };
   });
 
@@ -84,6 +81,7 @@ export default async function AdminPage() {
               <th className="p-3 font-medium">Clients</th>
               <th className="p-3 font-medium">Invoices</th>
               <th className="p-3 font-medium">Signed up</th>
+              <th className="p-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -114,6 +112,9 @@ export default async function AdminPage() {
                 <td className="p-3 text-gray-600">{r.clientCount}</td>
                 <td className="p-3 text-gray-600">{r.invoiceCount}</td>
                 <td className="p-3 text-gray-600">{new Date(r.createdAt).toLocaleDateString("en-ZA")}</td>
+                <td className="p-3">
+                  <DeleteBusinessButton businessId={r.id} businessName={r.name} />
+                </td>
               </tr>
             ))}
           </tbody>
